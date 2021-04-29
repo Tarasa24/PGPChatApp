@@ -20,13 +20,13 @@ spec:
     hosts:
     - chatapp.tarasa24.dev
   rules:
-  - host: tarasa24.dev
+  - host: chatapp.tarasa24.dev
     http:
       paths:
       - path: /app-api
         pathType: Prefix
         backend:
           service:
-            name: chatappServer-service
+            name: chatappserver-service
             port:
               number: 5000

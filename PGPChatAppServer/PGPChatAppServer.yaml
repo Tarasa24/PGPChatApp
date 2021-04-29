@@ -1,51 +1,60 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: chatappServer-service
+  name: chatappserver-service
   namespace: chatapp
 spec:
   type: ClusterIP
   ports:
     - port: 5000
       targetPort: 5000
-      name: api
+      name: app-api
   selector:
-    run: chatappServer-deployment
+    run: chatappserver-deployment
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: chatappServer-deployment
-  namespace: chatappServer
+  name: chatappserver-deployment
+  namespace: chatapp
 spec:
   replicas: 1
   selector:
     matchLabels:
-      run: chatappServer-deployment
+      run: chatappserver-deployment
   template:
     metadata:
       labels:
-        run: chatappServer-deployment
+        run: chatappserver-deployment
     spec:
       terminationGracePeriodSeconds: 30
       imagePullSecrets:
         - name: github-registry-pat
       containers:
-        - name: chatappServer
+        - name: chatappserver
           image: ghcr.io/tarasa24/pgpchatappserver:latest
           imagePullPolicy: 'Always'
           ports:
             - containerPort: 5000
+          volumeMounts:
+            - name: firebase-secret
+              subPath: firebase-secret.json
+              mountPath: /tmp/PGPChatAppServer/firebase-secret.json
+              readOnly: true
           env:
             - name: NODE_ENV
               value: 'production'
             - name: mysqlUser
               valueFrom:
                 secretKeyRef:
-                  name: web-secret
+                  name: pgpchatappserver-secret
                   key: mysqlUser
             - name: mysqlPass
               valueFrom:
                 secretKeyRef:
-                  name: web-secret
+                  name: pgpchatappserver-secret
                   key: mysqlPass
+      volumes:
+        - name: firebase-secret
+          secret:
+            secretName: firebase-secret
