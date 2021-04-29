@@ -52,15 +52,16 @@ jobs:
         run: ./gradlew assemble --no-daemon
 
       - name: Add SHORT_SHA env property with commit short sha
-        run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-8`" >> $GITHUB_ENV
+        id: short-sha
+        run: echo "::set-output name=SHORT_SHA::$(echo ${GITHUB_SHA} | cut -c1-8)"
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ SHORT_SHA }}
-          release_name: Release ${{ SHORT_SHA }}
+          tag_name: ${{ steps.short-sha.outputs.SHORT_SHA }}
+          release_name: Release ${{ steps.short-sha.outputs.SHORT_SHA }}
           draft: true
           prerelease: false
       - name: Upload Release Asset
