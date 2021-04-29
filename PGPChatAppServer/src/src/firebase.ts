@@ -1,9 +1,10 @@
 import admin from 'firebase-admin'
-
-import serviceAccount from '../firebase-secret.json'
+import fs from 'fs/promises'
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+  credential: admin.credential.cert(JSON.parse(
+    await fs.readFile('firebase-secret.json', 'utf-8')
+  ) as admin.ServiceAccount),
 })
 
 var message = {
