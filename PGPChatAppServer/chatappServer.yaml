@@ -32,7 +32,7 @@ spec:
         - name: github-registry-pat
       containers:
         - name: chatappServer
-          image: ghcr.io/tarasa24/PGPChatAppServer:latest
+          image: ghcr.io/tarasa24/pgpchatappserver:latest
           imagePullPolicy: 'Always'
           ports:
             - containerPort: 5000
