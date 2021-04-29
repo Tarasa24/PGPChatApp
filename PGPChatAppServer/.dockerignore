@@ -1,3 +1,4 @@
 firebase-secret.json
 *.sqlite
-/build
+build/
+node_modules/

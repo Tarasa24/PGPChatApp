@@ -12,31 +12,39 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions/setup-node@master
-      - uses: c-hive/gha-yarn-cache@v1
-
-      - name: Install node modules
-        working-directory: ./PGPChatAppMobile
-        run: yarn install
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+      - name: Cache node modules
+        uses: actions/cache@v2
+        env:
+          cache-name: node-modules-backend-cache
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('PGPChatAppMobile/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - run: npm ci
 
       - name: Cache Gradle Wrapper
         uses: actions/cache@v2
         with:
           path: ./PGPChatAppMobile/android/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
-
+          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('PGPChatAppMobile/android/gradle/wrapper/gradle-wrapper.properties') }}
       - name: Cache Gradle Dependencies
         uses: actions/cache@v2
         with:
           path: ./PGPChatAppMobile/android/.gradle/caches
-          key: ${{ runner.os }}-gradle-caches-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-caches-${{ hashFiles('PGPChatAppMobile/android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-caches-
       
       - name: Make Gradlew Executable
         working-directory: ./PGPChatAppMobile/android
         run: chmod +x ./gradlew
-
       - name: Build Android App Bundle
         working-directory: ./PGPChatAppMobile/android
         run: ./gradlew assemble --no-daemon
@@ -51,7 +59,6 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: true
           prerelease: false
-
       - name: Upload Release Asset
         id: upload-release-asset 
         uses: actions/upload-release-asset@v1

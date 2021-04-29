@@ -1,10 +1,10 @@
 FROM node:14.15.4
 
-WORKDIR /tmp/chatappServer
+WORKDIR /tmp/PGPChatAppServer
 
 COPY src/package.json package.json
-RUN npm install
-RUN npm audit fix
+COPY src/yarn.lock yarn.lock
+RUN yarn install
 
 COPY src .
 
