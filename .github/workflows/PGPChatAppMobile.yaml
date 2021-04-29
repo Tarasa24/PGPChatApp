@@ -27,7 +27,9 @@ jobs:
             ${{ runner.os }}-build-${{ env.cache-name }}-
             ${{ runner.os }}-build-
             ${{ runner.os }}-
-      - run: npm ci
+      - name: Instal npm packages
+        working-directory: ./PGPChatAppMobile
+        run: npm ci
 
       - name: Cache Gradle Wrapper
         uses: actions/cache@v2
