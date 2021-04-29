@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: chatappServer-service
+  namespace: chatapp
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: 5000
+      name: api
+  selector:
+    run: chatappServer-deployment
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: chatappServer-deployment
+  namespace: chatappServer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      run: chatappServer-deployment
+  template:
+    metadata:
+      labels:
+        run: chatappServer-deployment
+    spec:
+      terminationGracePeriodSeconds: 30
+      imagePullSecrets:
+        - name: github-registry-pat
+      containers:
+        - name: chatappServer
+          image: ghcr.io/tarasa24/PGPChatAppServer:latest
+          imagePullPolicy: 'Always'
+          ports:
+            - containerPort: 5000
+          env:
+            - name: NODE_ENV
+              value: 'production'
+            - name: mysqlUser
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: mysqlUser
+            - name: mysqlPass
+              valueFrom:
+                secretKeyRef:
+                  name: web-secret
+                  key: mysqlPass

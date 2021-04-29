@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "291878800809",
+    "project_id": "pgp-chatapp",
+    "storage_bucket": "pgp-chatapp.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:291878800809:android:123572cc332af1724108b8",
+        "android_client_info": {
+          "package_name": "dev.tarasa24.pgpchatapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "291878800809-4g3ienjpd47ghoshprvc5v20ifor9e02.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQhSQM2WQlm9kcuhdLkT7kPx3wjwuzGTE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "291878800809-4g3ienjpd47ghoshprvc5v20ifor9e02.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

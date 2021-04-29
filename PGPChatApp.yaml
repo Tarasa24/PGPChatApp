@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: chatapp
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: chatapp-ingress
+  namespace: chatapp
+  labels:
+    run: chatapp-deployment
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/from-to-www-redirect: 'true'
+spec:
+  tls:
+  - secretName: chatapp.tarasa24.dev-tls
+    hosts:
+    - chatapp.tarasa24.dev
+  rules:
+  - host: tarasa24.dev
+    http:
+      paths:
+      - path: /app-api
+        pathType: Prefix
+        backend:
+          service:
+            name: chatappServer-service
+            port:
+              number: 5000

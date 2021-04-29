@@ -1,0 +1,5 @@
+firebase-secret.json
+*.sqlite
+build/
+yarn.lock
+node_modules/

@@ -1,0 +1,3 @@
+firebase-secret.json
+*.sqlite
+/build
