@@ -8,6 +8,6 @@ RUN yarn install
 
 COPY src .
 
-RUN npm run build
+RUN yarn run build
 
-CMD [ "npm",  "run", "start" ]
+CMD [ "yarn",  "run", "start" ]
