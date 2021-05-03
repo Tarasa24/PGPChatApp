@@ -44,7 +44,7 @@ const path = __DEV__
   ? DeviceInfo.isEmulatorSync()
     ? 'ws://10.0.2.2:5000'
     : 'ws://192.168.1.82:5000'
-  : 'wss://chatapp.tarasa24.dev/app-api'
+  : 'wss://chatapp.tarasa24.dev'
 
 const socket = io(path, {
   reconnection: true,
@@ -52,6 +52,8 @@ const socket = io(path, {
   timeout: 1000,
   reconnectionDelayMax: 1000,
   path: __DEV__ ? '/socket.io' : '/app-api/socket.io',
+  forceNew: true,
+  multiplex: false,
 })
 
 async function emitUnsentMessages(socket: any) {
