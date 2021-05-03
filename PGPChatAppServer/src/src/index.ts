@@ -11,7 +11,10 @@ import { sequelize } from './models.js'
 
 const app = express()
 const server = createServer(app)
-const io = new Server(server, {})
+const io = new Server(server, {
+  path:
+    process.env.NODE_ENV === 'production' ? '/app-api/socket.io' : '/socket.io',
+})
 initSocketIO(io)
 
 app.use(express.json())

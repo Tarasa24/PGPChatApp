@@ -181,7 +181,7 @@ export function GenerateAccount(props: Props) {
                     case 409:
                       throw 'Derived ChatApp ID missmatch'
                     case 500:
-                      throw await res.json()
+                      throw JSON.stringify(await res.json())
                     default:
                       throw 'Unexpected response from the server ' + res.status
                   }

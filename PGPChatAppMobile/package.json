@@ -19,6 +19,7 @@
     "buffer": "^6.0.3",
     "crypto-js": "3.1.9-1",
     "events": "^3.2.0",
+    "metro-minify-terser": "^0.66.0",
     "random-words": "^1.1.1",
     "react": "16.11.0",
     "react-native": "^0.64.0",
@@ -43,7 +44,7 @@
     "redux-persist": "^6.0.0",
     "reflect-metadata": "^0.1.13",
     "socket.io-client": "^4.0.1",
-    "typeorm": "^0.2.31"
+    "typeorm": "^0.2.32"
   },
   "devDependencies": {
     "@babel/core": "^7.8.4",

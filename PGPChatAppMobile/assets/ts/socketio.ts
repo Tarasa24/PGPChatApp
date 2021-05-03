@@ -51,6 +51,7 @@ const socket = io(path, {
   reconnectionAttempts: Infinity,
   timeout: 1000,
   reconnectionDelayMax: 1000,
+  path: __DEV__ ? '/socket.io' : '/app-api/socket.io',
 })
 
 async function emitUnsentMessages(socket: any) {
