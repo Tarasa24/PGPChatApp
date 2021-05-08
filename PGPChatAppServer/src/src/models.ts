@@ -21,14 +21,14 @@ export const MessagesQueue = sequelize.define(
   'MessagesQueue',
   {
     id: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(36),
       primaryKey: true,
     },
     timestamp: DataTypes.DATE,
-    message_content: DataTypes.STRING,
-    message_signature: DataTypes.STRING,
-    to: DataTypes.STRING,
-    from: DataTypes.STRING,
+    message_content: DataTypes.TEXT,
+    message_signature: DataTypes.TEXT,
+    to: DataTypes.STRING(28),
+    from: DataTypes.STRING(28),
   },
   {
     freezeTableName: true,
@@ -45,10 +45,10 @@ export type MessagesQueueType = {
 
 export const KeyServerEntry = sequelize.define('KeyServerEntry', {
   id: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(28),
     primaryKey: true,
   },
-  publicKey: DataTypes.STRING,
+  publicKey: DataTypes.TEXT,
   nonce: DataTypes.INTEGER,
 })
 
@@ -61,9 +61,9 @@ export type KeyServerEntryType = {
 export const MessageUpdateQueue = sequelize.define(
   'MessageUpdateQueue',
   {
-    messageId: DataTypes.STRING,
+    messageId: DataTypes.STRING(36),
     action: DataTypes.STRING,
-    to: DataTypes.STRING,
+    to: DataTypes.STRING(28),
   },
   {
     freezeTableName: true,
