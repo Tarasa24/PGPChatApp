@@ -176,18 +176,7 @@ function Chat(props: Props) {
       to: props.route.params.participants.other.id,
     } as SendPayload)
 
-    setMessages(
-      [
-        {
-          id: message.id,
-          timestamp: message.timestamp,
-          text: message.text,
-          author: props.route.params.participants.self.id,
-          recipient: props.route.params.participants.other.id,
-          status: MessageStatus.sending,
-        } as MessageRaw,
-      ].concat(messages)
-    )
+    props.addToMessageUpdateList(message.id)
 
     scrollViewRef.scrollToEnd()
   }
