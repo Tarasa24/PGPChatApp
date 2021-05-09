@@ -1,10 +1,10 @@
-import React, { useRef, useState } from 'react'
-import { View, Text, Platform, NativeModules } from 'react-native'
+import React, { useRef } from 'react'
+import { View, Text } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-ionicons'
 import { connect } from 'react-redux'
 import { lightenDarkenColor } from '../assets/ts/lightenDarkenColor'
-import { Message, MessageRaw, MessageStatus } from '../assets/ts/orm'
+import { MessageRaw, MessageStatus } from '../assets/ts/orm'
 import { LocalUserState } from '../store/reducers/localUserReducer'
 import { useTheme } from './ThemeContext'
 import {
@@ -15,6 +15,7 @@ import {
   renderers,
 } from 'react-native-popup-menu'
 import Clipboard from '@react-native-clipboard/clipboard'
+import { timeHandler } from '../assets/ts/helperFunctions'
 
 interface Props {
   localUser: LocalUserState
@@ -24,14 +25,7 @@ interface Props {
 
 function ChatBubble(props: Props) {
   const theme = useTheme()
-
   const isAuthorMe = props.message.author === props.localUser.id
-
-  const locale =
-    Platform.OS === 'ios'
-      ? NativeModules.SettingsManager.settings.AppleLocale
-      : NativeModules.I18nManager.localeIdentifier
-
   const menuRef = useRef<Menu>()
 
   function statusIcon(status: MessageStatus) {
@@ -108,7 +102,7 @@ function ChatBubble(props: Props) {
               }}
             >
               <Text style={{ color: theme.colors.text, marginRight: 5 }}>
-                {new Date(props.message.timestamp).toLocaleTimeString(locale)}
+                {timeHandler(props.message.timestamp)}
               </Text>
               {isAuthorMe ? statusIcon(props.message.status) : null}
             </View>

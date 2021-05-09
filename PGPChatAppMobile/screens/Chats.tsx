@@ -24,6 +24,7 @@ import ChatsHeader from '../components/ChatsHeader'
 import { useTheme } from '../components/ThemeContext'
 import { LocalUserState } from '../store/reducers/localUserReducer'
 import * as Chat from './Chat'
+import { timeHandler } from '../assets/ts/helperFunctions'
 
 interface Props {
   localUser: LocalUserState
@@ -33,11 +34,6 @@ interface Props {
 function Chats(props: Props) {
   const navigation = useNavigation()
   const theme = useTheme()
-
-  const locale =
-    Platform.OS === 'ios'
-      ? NativeModules.SettingsManager.settings.AppleLocale
-      : NativeModules.I18nManager.localeIdentifier
 
   enum Stage {
     Loading,
@@ -207,17 +203,12 @@ function Chats(props: Props) {
                 <View style={styles.status}>
                   <Text style={{ color: theme.colors.text }}>
                     {other.lastMessage ? (
-                      new Date(other.lastMessage.timestamp).toLocaleTimeString(
-                        locale
-                      )
+                      timeHandler(other.lastMessage.timestamp)
                     ) : (
                       ' '
                     )}
                   </Text>
-                  {other.lastMessage &&
-                  other.lastMessage.author.id !== other.user.id ? (
-                    statusIcon(other.lastMessage)
-                  ) : null}
+                  {other.lastMessage ? statusIcon(other.lastMessage) : null}
                 </View>
               </View>
             </TouchableOpacity>

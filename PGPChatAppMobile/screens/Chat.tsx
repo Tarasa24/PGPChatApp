@@ -6,6 +6,9 @@ import {
   ActivityIndicator,
   ScrollView,
   Keyboard,
+  Text,
+  Platform,
+  NativeModules,
 } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-ionicons'
@@ -223,6 +226,53 @@ function Chat(props: Props) {
   }
 
   function chatBubbles() {
+    function generateArray(messages: MessageRaw[]) {
+      const locale =
+        Platform.OS === 'ios'
+          ? NativeModules.SettingsManager.settings.AppleLocale
+          : NativeModules.I18nManager.localeIdentifier
+
+      const out = []
+      for (let i = 0; i < messages.length; i++) {
+        const m = messages[i]
+
+        out.push(
+          <ChatBubble
+            message={m as any}
+            key={m.id}
+            onDelete={async (messageID) => {
+              const messageRepository = getRepository(Message)
+              await messageRepository.delete({ id: messageID })
+
+              setMessages([...messages.slice(0, i), ...messages.slice(i + 1)])
+
+              socket.emit('messageUpdate', {
+                action: 'DELETE',
+                messageId: messageID,
+                to: props.route.params.participants.other.id,
+              } as MessageUpdatePayload & { to: string })
+
+              props.addToMessageUpdateList(messageID)
+            }}
+          />
+        )
+
+        if (
+          i + 1 !== messages.length &&
+          new Date(messages[i].timestamp).toDateString() !==
+            new Date(messages[i + 1].timestamp).toDateString()
+        ) {
+          out.push(
+            <Text style={{ textAlign: 'center', color: 'gray' }} key={i}>
+              {new Date(messages[i + 1].timestamp).toLocaleDateString(locale)}
+            </Text>
+          )
+        }
+      }
+
+      return out
+    }
+
     if (stage === Stages.Loading)
       return (
         <View style={{ flexGrow: 1, justifyContent: 'center' }}>
@@ -243,31 +293,7 @@ function Chat(props: Props) {
               flexDirection: 'column-reverse',
             }}
           >
-            {messages.map((m, i) => {
-              return (
-                <ChatBubble
-                  message={m as any}
-                  key={m.id}
-                  onDelete={async (messageID) => {
-                    const messageRepository = getRepository(Message)
-                    await messageRepository.delete({ id: messageID })
-
-                    setMessages([
-                      ...messages.slice(0, i),
-                      ...messages.slice(i + 1),
-                    ])
-
-                    socket.emit('messageUpdate', {
-                      action: 'DELETE',
-                      messageId: messageID,
-                      to: props.route.params.participants.other.id,
-                    } as MessageUpdatePayload & { to: string })
-
-                    props.addToMessageUpdateList(messageID)
-                  }}
-                />
-              )
-            })}
+            {generateArray(messages)}
           </View>
         </ScrollView>
       )
