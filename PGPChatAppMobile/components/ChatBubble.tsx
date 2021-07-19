@@ -149,32 +149,36 @@ function ChatBubble(props: Props) {
             </Text>
           </MenuOption>
 
-          <View
-            style={{
-              backgroundColor: theme.colors.border,
-              width: 300,
-              height: 0.7,
-            }}
-          />
+          {props.message.status !== MessageStatus.deleted ? (
+            <View>
+              <View
+                style={{
+                  backgroundColor: theme.colors.border,
+                  width: 300,
+                  height: 0.7,
+                }}
+              />
 
-          <MenuOption
-            style={{ marginVertical: 7.5 }}
-            onSelect={() => {
-              Clipboard.setString(props.message.text)
-            }}
-          >
-            <Text
-              style={{
-                color: theme.colors.text,
-                fontSize: 15,
-                textAlign: 'center',
-              }}
-            >
-              Copy
-            </Text>
-          </MenuOption>
+              <MenuOption
+                style={{ marginVertical: 7.5 }}
+                onSelect={() => {
+                  Clipboard.setString(props.message.text)
+                }}
+              >
+                <Text
+                  style={{
+                    color: theme.colors.text,
+                    fontSize: 15,
+                    textAlign: 'center',
+                  }}
+                >
+                  Copy
+                </Text>
+              </MenuOption>
+            </View>
+          ) : null}
 
-          {isAuthorMe ? (
+          {isAuthorMe && props.message.status !== MessageStatus.deleted ? (
             <View>
               <View
                 style={{
