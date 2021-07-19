@@ -28,24 +28,16 @@ function ChatBubble(props: Props) {
   const isAuthorMe = props.message.author === props.localUser.id
   const menuRef = useRef<Menu>()
 
-  function statusIcon(status: MessageStatus) {
+  function statusIcon(status: MessageStatus, color = theme.colors.text) {
     switch (status) {
       case MessageStatus.sending:
-        return <Icon name="cloud-upload" size={15} color={theme.colors.text} />
+        return <Icon name="cloud-upload" size={15} color={color} />
       case MessageStatus.sent:
-        return <Icon name="cloud-done" size={15} color={theme.colors.text} />
+        return <Icon name="cloud-done" size={15} color={color} />
       case MessageStatus.recieved:
-        return (
-          <Icon name="radio-button-off" size={15} color={theme.colors.text} />
-        )
+        return <Icon name="radio-button-off" size={15} color={color} />
       case MessageStatus.read:
-        return (
-          <Icon
-            name="checkmark-circle-outline"
-            size={15}
-            color={theme.colors.text}
-          />
-        )
+        return <Icon name="checkmark-circle-outline" size={15} color={color} />
     }
   }
 
@@ -121,6 +113,41 @@ function ChatBubble(props: Props) {
             alignItems: 'center',
           }}
         >
+          <MenuOption style={{ marginTop: 7.5 }}>
+            <Text
+              style={{
+                color: 'grey',
+                fontSize: 15,
+                textAlign: 'center',
+              }}
+            >
+              {new Date(props.message.timestamp).toString()}
+            </Text>
+          </MenuOption>
+
+          <MenuOption style={{ marginBottom: 7.5 }}>
+            <Text
+              style={{
+                color: 'grey',
+                fontSize: 15,
+                textAlign: 'center',
+              }}
+            >
+              {MessageStatus[props.message.status].charAt(0).toUpperCase() +
+                MessageStatus[props.message.status].slice(1) +
+                ' '}
+              {statusIcon(props.message.status, 'grey')}
+            </Text>
+          </MenuOption>
+
+          <View
+            style={{
+              backgroundColor: theme.colors.border,
+              width: 300,
+              height: 0.7,
+            }}
+          />
+
           <MenuOption
             style={{ marginVertical: 7.5 }}
             onSelect={() => {
@@ -137,6 +164,7 @@ function ChatBubble(props: Props) {
               Copy
             </Text>
           </MenuOption>
+
           {isAuthorMe ? (
             <View>
               <View
