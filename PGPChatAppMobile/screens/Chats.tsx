@@ -74,10 +74,12 @@ function Chats(props: Props) {
               {
                 recipient: self,
                 author: user,
+                status: Not(MessageStatus.deleted),
               },
               {
                 recipient: user,
                 author: self,
+                status: Not(MessageStatus.deleted),
               },
             ],
             order: { timestamp: 'DESC' },

@@ -214,7 +214,10 @@ function connect() {
           )
           break
         case 'DELETE':
-          await messageRepository.delete({ id: payload.messageId })
+          await messageRepository.update(
+            { id: payload.messageId },
+            { status: ORM.MessageStatus.deleted, text: '' }
+          )
           break
       }
 

@@ -38,7 +38,20 @@ function ChatBubble(props: Props) {
         return <Icon name="radio-button-off" size={15} color={color} />
       case MessageStatus.read:
         return <Icon name="checkmark-circle-outline" size={15} color={color} />
+      case MessageStatus.deleted:
+        return <Icon name="trash" size={15} color={color} />
     }
+  }
+
+  function showText(text: string, status: MessageStatus) {
+    if (status == MessageStatus.deleted)
+      return (
+        <Text style={{ color: theme.colors.text, fontStyle: 'italic' }}>
+          This message was deleted.
+        </Text>
+      )
+    else if (text)
+      return <Text style={{ color: theme.colors.text }}>{text}</Text>
   }
 
   return (
@@ -79,11 +92,7 @@ function ChatBubble(props: Props) {
               flexShrink: 1,
             }}
           >
-            <View>
-              <Text style={{ color: theme.colors.text }}>
-                {props.message.text ? props.message.text : ''}
-              </Text>
-            </View>
+            <View>{showText(props.message.text, props.message.status)}</View>
 
             <View
               style={{

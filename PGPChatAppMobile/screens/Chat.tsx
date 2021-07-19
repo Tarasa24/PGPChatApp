@@ -242,9 +242,10 @@ function Chat(props: Props) {
             key={m.id}
             onDelete={async (messageID) => {
               const messageRepository = getRepository(Message)
-              await messageRepository.delete({ id: messageID })
-
-              setMessages([...messages.slice(0, i), ...messages.slice(i + 1)])
+              await messageRepository.update(
+                { id: messageID },
+                { status: MessageStatus.deleted, text: '' }
+              )
 
               socket.emit('messageUpdate', {
                 action: 'DELETE',

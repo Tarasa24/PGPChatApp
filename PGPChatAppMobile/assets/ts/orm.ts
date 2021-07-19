@@ -37,6 +37,7 @@ export enum MessageStatus {
   sent,
   recieved,
   read,
+  deleted,
 }
 
 @Entity()
