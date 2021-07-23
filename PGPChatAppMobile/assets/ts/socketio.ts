@@ -257,6 +257,7 @@ function connect() {
 
     try {
       const messageRepository = await getRepository(ORM.Message)
+      const fileRepository = await getRepository(ORM.File)
 
       switch (payload.action) {
         case 'SET_STATUS_SENT':
@@ -282,6 +283,12 @@ function connect() {
             { id: payload.messageId },
             { status: ORM.MessageStatus.deleted, text: '' }
           )
+
+          await fileRepository.delete({
+            parentMessage: await messageRepository.findOne({
+              id: payload.messageId,
+            }),
+          })
           break
       }
 
