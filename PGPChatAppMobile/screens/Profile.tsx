@@ -45,12 +45,7 @@ export function Profile(props: Props) {
     if (localUser.picture) await fileRepository.remove(localUser.picture)
   }
 
-  async function saveImageToDB(
-    uri: string,
-    mime: MimeType,
-    name: string,
-    size: number
-  ) {
+  async function saveImageToDB(uri: string, mime: MimeType, name: string) {
     const userRepository = getRepository(User)
     const fileRepository = getRepository(File)
 
@@ -65,8 +60,14 @@ export function Profile(props: Props) {
     const picture = new File()
     picture.mime = mime
     picture.name = name
-    picture.size = size
-    picture.b64 = await RNFS.readFile(uri, 'base64')
+    picture.uri = `${RNFS.ExternalStorageDirectoryPath}/PGPChatApp/${Date.now()}-${name}`
+
+    await RNFS.mkdir(RNFS.ExternalStorageDirectoryPath + '/PGPChatApp')
+    await RNFS.writeFile(
+      picture.uri,
+      await RNFS.readFile(uri, 'base64'),
+      'base64'
+    )
 
     localUser.picture = await fileRepository.save(picture)
 
@@ -81,7 +82,7 @@ export function Profile(props: Props) {
       const res = await DocumentPicker.pick({
         type: [DocumentPicker.types.images],
       })
-      saveImageToDB(res.uri, res.type as MimeType, res.name, res.size)
+      saveImageToDB(res.uri, res.type as MimeType, res.name)
     } catch (err) {
       if (!DocumentPicker.isCancel(err)) throw err
     }

@@ -7,6 +7,8 @@ import * as socketConnectedReducer from '../../store/reducers/socketConnectedRed
 import { store } from '../../store/store'
 import { fetchRest, ping } from './api'
 import * as ORM from './orm'
+import * as RNFS from 'react-native-fs'
+import RNFetchBlob from 'rn-fetch-blob'
 
 type UserID = string
 type LoginPayload = {
@@ -58,6 +60,7 @@ const socket = io(path, {
 
 async function emitUnsentMessages(socket: any) {
   const messageRepository = getRepository(ORM.Message)
+  const fileRepository = getRepository(ORM.File)
   const unsentMessages = await messageRepository.find({
     where: { status: ORM.MessageStatus.sending },
   })
@@ -66,13 +69,34 @@ async function emitUnsentMessages(socket: any) {
     const localUser = store.getState().localUserReducer
 
     for (const msg of unsentMessages) {
+      const files = await fileRepository.find({ where: { parentMessage: msg } })
+
+      const filesBase64 = []
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        filesBase64.push(await RNFS.readFile(file.uri, 'base64'))
+      }
+
+      const payload = JSON.stringify({
+        text: msg.text,
+        files: files.map((file, i) => {
+          return {
+            linkUri: file.linkUri,
+            base64: !file.linkUri ? filesBase64[i] : null,
+            name: file.name,
+            mime: file.mime,
+            renderable: file.renderable,
+          }
+        }),
+      } as ORM.sendMessageContent)
+
       socket.emit('send', {
         id: msg.id,
         timestamp: msg.timestamp,
         message: {
-          content: await OpenPGP.encrypt(msg.text, msg.recipient.publicKey),
+          content: await OpenPGP.encrypt(payload, msg.recipient.publicKey),
           signature: await OpenPGP.sign(
-            msg.text,
+            payload,
             localUser.publicKey,
             localUser.privateKey,
             ''
@@ -160,18 +184,58 @@ function connect() {
     msg.recipient = await userRepository.findOne(
       store.getState().localUserReducer.id
     )
-    msg.text = await OpenPGP.decrypt(
-      payload.message.content,
-      store.getState().localUserReducer.privateKey,
-      ''
+
+    const recievePayload: ORM.sendMessageContent = JSON.parse(
+      await OpenPGP.decrypt(
+        payload.message.content,
+        store.getState().localUserReducer.privateKey,
+        ''
+      )
     )
+
+    msg.text = recievePayload.text
     msg.status = ORM.MessageStatus.recieved
 
     // If signature isn't valid, silently drop the message
-    if (!OpenPGP.verify(payload.message.signature, msg.text, author.publicKey))
+    if (
+      !OpenPGP.verify(
+        payload.message.signature,
+        JSON.stringify(recievePayload),
+        author.publicKey
+      )
+    )
       return
 
+    // Save message and if present also files
     await messageRepository.save(msg)
+
+    if (recievePayload.files.length > 0) {
+      for (let i = 0; i < recievePayload.files.length; i++) {
+        const file = recievePayload.files[i]
+        const uri = `${RNFS.ExternalStorageDirectoryPath}/PGPChatApp/${Date.now()}-${file.name}`
+
+        await RNFS.mkdir(RNFS.ExternalStorageDirectoryPath + '/PGPChatApp')
+
+        if (!file.linkUri) await RNFS.writeFile(uri, file.base64, 'base64')
+        else
+          await RNFetchBlob.config({
+            path: uri,
+          }).fetch('GET', file.linkUri, {})
+
+        const fileRepository = getRepository(ORM.File)
+        const newFile = new ORM.File()
+        newFile.linkUri = file.linkUri
+        newFile.mime = file.mime
+        newFile.uri = uri
+        newFile.name = file.name
+        newFile.renderable = file.renderable
+        newFile.parentMessage = msg
+
+        fileRepository.insert(newFile)
+      }
+    }
+
+    // Send acknowledgement of recieving and clean-up
     socket.emit('recieveAck', msg.id)
     socket.emit('messageUpdate', {
       to: msg.author.id,

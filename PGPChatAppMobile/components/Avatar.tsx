@@ -6,6 +6,7 @@ import Svg, { Circle, Text } from 'react-native-svg'
 import { useTheme } from './ThemeContext'
 import { lightenDarkenColor } from '../assets/ts/lightenDarkenColor'
 import { connect } from 'react-redux'
+import * as RNFS from 'react-native-fs'
 
 interface Props {
   userID: string
@@ -24,7 +25,7 @@ function Avatar(props: Props) {
 
   interface Status {
     status: StatusEnum
-    picture?: File
+    picture?: File & { b64: string }
   }
 
   const [status, setStatus] = useState({ status: StatusEnum.Loading } as Status)
@@ -35,10 +36,16 @@ function Avatar(props: Props) {
         const fileID = props.userAvatars[props.userID]
 
         if (fileID) {
-          const userRepository = getRepository(File)
-          const picture = await userRepository.findOneOrFail({ id: fileID })
+          const fileRepository = getRepository(File)
+          const picture = await fileRepository.findOneOrFail({ id: fileID })
 
-          setStatus({ status: StatusEnum.Image, picture: picture })
+          setStatus({
+            status: StatusEnum.Image,
+            picture: {
+              ...picture,
+              b64: await RNFS.readFile(picture.uri, 'base64'),
+            },
+          })
         } else setStatus({ status: StatusEnum.Svg })
       }
 

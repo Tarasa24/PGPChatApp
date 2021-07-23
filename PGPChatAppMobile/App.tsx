@@ -1,6 +1,6 @@
 // Import dependencies
 import * as React from 'react'
-import { View } from 'react-native'
+import { Alert, PermissionsAndroid, View } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
 import { createStackNavigator } from '@react-navigation/stack'
 import { PersistGate } from 'redux-persist/integration/react'
@@ -37,6 +37,19 @@ export default function App() {
     // Connect & sync interal db and initialize socket connection
     Socket.connect()
     ORM.connect().then((connection: Connection) => setConnected(true))
+
+    // Obtain necessary permissions
+    PermissionsAndroid.requestMultiple([
+      PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+      PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+    ]).then((granted) => {
+      if (!granted) {
+        Alert.alert(
+          'Read and write permissions have not been granted',
+          "You won't be able to send or recieve files until granted"
+        )
+      }
+    })
   }, [])
 
   function evalConnected() {

@@ -1,4 +1,8 @@
 rootProject.name = 'PGPChatApp'
+include ':react-native-video'
+project(':react-native-video').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-video/android')
+include ':react-native-image-keyboard'
+project(':react-native-image-keyboard').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-image-keyboard/android')
 include ':react-native-appearance'
 project(':react-native-appearance').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-appearance/android')
 include ':react-native-push-notification'

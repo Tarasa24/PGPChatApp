@@ -1,10 +1,10 @@
-import React, { useRef } from 'react'
-import { View, Text } from 'react-native'
+import React, { useEffect, useRef, useState } from 'react'
+import { View, Text, Image, ActivityIndicator } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-ionicons'
 import { connect } from 'react-redux'
 import { lightenDarkenColor } from '../assets/ts/lightenDarkenColor'
-import { MessageRaw, MessageStatus } from '../assets/ts/orm'
+import { File, MessageRaw, MessageStatus } from '../assets/ts/orm'
 import { LocalUserState } from '../store/reducers/localUserReducer'
 import { useTheme } from './ThemeContext'
 import {
@@ -16,6 +16,8 @@ import {
 } from 'react-native-popup-menu'
 import Clipboard from '@react-native-clipboard/clipboard'
 import { timeHandler } from '../assets/ts/helperFunctions'
+import * as RNFS from 'react-native-fs'
+import Video from 'react-native-video'
 
 interface Props {
   localUser: LocalUserState
@@ -27,6 +29,27 @@ function ChatBubble(props: Props) {
   const theme = useTheme()
   const isAuthorMe = props.message.author === props.localUser.id
   const menuRef = useRef<Menu>()
+
+  const [filesb64, setFilesb64] = useState([] as string[])
+
+  useEffect(() => {
+    ;(async function() {
+      if (props.message.files.length > 0) {
+        const out = []
+        for (let i = 0; i < props.message.files.length; i++) {
+          const file = props.message.files[i]
+          try {
+            if (file.renderable)
+              out.push(await RNFS.readFile(file.uri, 'base64'))
+            else out.push(null)
+          } catch (error) {
+            out.push(null)
+          }
+        }
+        setFilesb64([...filesb64, ...out])
+      }
+    })()
+  }, [])
 
   function statusIcon(status: MessageStatus, color = theme.colors.text) {
     switch (status) {
@@ -54,6 +77,61 @@ function ChatBubble(props: Props) {
       return <Text style={{ color: theme.colors.text }}>{text}</Text>
   }
 
+  function showFiles(files: File[]) {
+    if (files.length > 0 && filesb64.length > 0) {
+      return filesb64.map((b64, i) => {
+        if (!props.message.files[i]) return null
+        if (b64 !== null) {
+          if (props.message.files[i].name.includes('.mp4'))
+            return (
+              <Video
+                key={i}
+                source={{ uri: props.message.files[i].uri }}
+                volume={0}
+                repeat={true}
+                resizeMode="contain"
+                style={{ height: 150, marginVertical: 10 }}
+              />
+            )
+          else
+            return (
+              <Image
+                key={i}
+                style={{
+                  height: 150,
+                  width: '100%',
+                  resizeMode: 'contain',
+                  borderRadius: 5,
+                  marginVertical: 5,
+                }}
+                source={{
+                  uri: `data:${props.message.files[i].mime};base64,${b64}`,
+                }}
+              />
+            )
+        } else
+          return (
+            <View
+              key={i}
+              style={{
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginVertical: 10,
+              }}
+            >
+              <Icon name="document" size={50} color={theme.colors.text} />
+              <Text
+                style={{ color: theme.colors.text, fontSize: 12 }}
+                numberOfLines={1}
+              >
+                {props.message.files[i].name}
+              </Text>
+            </View>
+          )
+      })
+    }
+  }
+
   return (
     <View
       style={{
@@ -70,45 +148,52 @@ function ChatBubble(props: Props) {
           alignItems: 'flex-end',
         }}
       >
-        <TouchableOpacity
-          activeOpacity={0.7}
-          onLongPress={() => menuRef.current.open()}
-        >
-          <View
-            style={{
-              backgroundColor: isAuthorMe
-                ? lightenDarkenColor(
-                    theme.colors.background,
-                    25 * (theme.dark ? 1 : -1)
-                  )
-                : lightenDarkenColor(
-                    theme.colors.primary,
-                    55 * (theme.dark ? -1 : 1)
-                  ),
-              paddingHorizontal: 15,
-              paddingVertical: 7,
-              borderRadius: 20,
-              marginRight: 5,
-              flexShrink: 1,
-            }}
+        <View style={{ flex: props.message.files.length > 0 ? 1 : 0 }}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onLongPress={() => menuRef.current.open()}
           >
-            <View>{showText(props.message.text, props.message.status)}</View>
-
             <View
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: isAuthorMe ? 'flex-end' : 'flex-start',
-                marginTop: 7.5,
+                backgroundColor: isAuthorMe
+                  ? lightenDarkenColor(
+                      theme.colors.background,
+                      25 * (theme.dark ? 1 : -1)
+                    )
+                  : lightenDarkenColor(
+                      theme.colors.primary,
+                      55 * (theme.dark ? -1 : 1)
+                    ),
+                paddingHorizontal: 15,
+                paddingVertical: 7,
+                borderRadius: 20,
+                marginRight: 5,
+                flexShrink: 1,
               }}
             >
-              <Text style={{ color: theme.colors.text, marginRight: 5 }}>
-                {timeHandler(props.message.timestamp)}
-              </Text>
-              {isAuthorMe ? statusIcon(props.message.status) : null}
+              <View>
+                {showText(props.message.text, props.message.status)}
+                <View style={{ marginTop: 10 }}>
+                  {showFiles(props.message.files)}
+                </View>
+              </View>
+
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: isAuthorMe ? 'flex-end' : 'flex-start',
+                  marginTop: 7.5,
+                }}
+              >
+                <Text style={{ color: theme.colors.text, marginRight: 5 }}>
+                  {timeHandler(props.message.timestamp)}
+                </Text>
+                {isAuthorMe ? statusIcon(props.message.status) : null}
+              </View>
             </View>
-          </View>
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Menu ref={menuRef} renderer={renderers.SlideInMenu}>
