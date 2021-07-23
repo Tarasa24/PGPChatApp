@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native'
 import Icon from 'react-native-ionicons'
-import { Message, User } from '../assets/ts/orm'
+import { File, Message, User } from '../assets/ts/orm'
 import Avatar from './Avatar'
 import { useTheme } from './ThemeContext'
 import {
@@ -115,20 +115,40 @@ function ChatHeader(props: Props) {
               </MenuOption>
               <MenuOption
                 onSelect={async () => {
+                  let ids = await getConnection()
+                    .createQueryBuilder()
+                    .select('message.id', 'id')
+                    .from(Message, 'message')
+                    .where('message.author = :from', { from: props.user.id })
+                    .orWhere('message.recipient = :to', { to: props.user.id })
+                    .execute()
+                  ids = ids.map((id) => {
+                    return id.id
+                  })
+
+                  await getConnection()
+                    .createQueryBuilder()
+                    .delete()
+                    .from(File)
+                    .where('parentMessage In(:id)', {
+                      id: ids.join(', '),
+                    })
+                    .execute()
+
                   await getConnection()
                     .createQueryBuilder()
                     .delete()
                     .from(Message)
-                    .where('author = :from', { from: props.user.id })
-                    .orWhere('recipient = :to', { to: props.user.id })
+                    .where('id In(:id)', {
+                      id: ids.join(', '),
+                    })
                     .execute()
 
                   const userRepository = getRepository(User)
                   await userRepository.remove(props.user)
 
-                  props.addToMessageUpdateList('null')
-
                   navigation.goBack()
+                  props.addToMessageUpdateList('null')
                 }}
               >
                 <Text style={{ ...styles.optionText, color: 'red' }}>
