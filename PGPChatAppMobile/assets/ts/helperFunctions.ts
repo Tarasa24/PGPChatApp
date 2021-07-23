@@ -1,7 +1,7 @@
 import { Platform, NativeModules } from 'react-native'
 
 export function timeHandler(timestamp: number) {
-  const diff = Math.round((Date.now() - timestamp) / 1000)
+  let diff = Math.round((Date.now() - Number(new Date(timestamp))) / 1000)
 
   const locale =
     Platform.OS === 'ios'

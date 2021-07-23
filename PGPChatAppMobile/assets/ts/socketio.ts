@@ -179,7 +179,7 @@ function connect() {
 
     const msg = new ORM.Message()
     msg.id = payload.id
-    msg.timestamp = payload.timestamp
+    msg.timestamp = Number(new Date(payload.timestamp))
     msg.author = author
     msg.recipient = await userRepository.findOne(
       store.getState().localUserReducer.id
@@ -263,7 +263,10 @@ function connect() {
         case 'SET_STATUS_SENT':
           await messageRepository.update(
             { id: payload.messageId },
-            { status: ORM.MessageStatus.sent, timestamp: payload.timestamp }
+            {
+              status: ORM.MessageStatus.sent,
+              timestamp: Number(new Date(payload.timestamp)),
+            }
           )
           break
         case 'SET_STATUS_RECIEVED':
