@@ -50,12 +50,14 @@ export const KeyServerEntry = sequelize.define('KeyServerEntry', {
   },
   publicKey: DataTypes.TEXT,
   nonce: DataTypes.INTEGER,
+  notificationToken: DataTypes.STRING,
 })
 
 export type KeyServerEntryType = {
   id: string
   publicKey: string
   nonce: number
+  notificationToken: string
 }
 
 export const MessageUpdateQueue = sequelize.define(

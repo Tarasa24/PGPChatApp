@@ -5,8 +5,8 @@ import fs from 'fs/promises'
 import path from 'path'
 
 import keyserver from './api/keyserver.js'
+import notifications from './api/notifications.js'
 import ping from './api/ping.js'
-import { env } from 'node:process'
 
 const router = express.Router()
 
@@ -39,6 +39,7 @@ router.use('/docs/', swaggerUi.serve)
 router.get('/docs/', swaggerUi.setup(swaggerSpec))
 
 router.use('/keyserver/', keyserver)
+router.use('/notifications/', notifications)
 router.use('/ping', ping)
 
 export default router

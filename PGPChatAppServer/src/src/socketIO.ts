@@ -1,6 +1,4 @@
 import { Server, Socket } from 'socket.io'
-import openpgp from 'openpgp'
-import crypto from 'crypto'
 import {
   LoginPayload,
   MessageUpdatePayload,
@@ -11,12 +9,12 @@ import {
   UserSocket,
 } from './types'
 import {
-  KeyServerEntry,
-  KeyServerEntryType,
   MessagesQueue,
   MessagesQueueType,
   MessageUpdateQueue,
 } from './models.js'
+import { verifyNonceSignature } from './helperFunctions.js'
+import { sendNotification } from './firebase.js'
 
 let userSocketMap: UserSocket = {}
 let socketUserMap: SocketUser = {}
@@ -56,26 +54,8 @@ export default function(io: Server) {
         if (!data.userID || !data.signature) throw 'Invalid payload'
 
         // Verify the signature
-        const userModel = await KeyServerEntry.findOne({
-          where: { id: data.userID },
-        })
-        if (userModel === null) throw "UserID dosen't exist"
-        const { nonce, publicKey } = userModel.toJSON() as KeyServerEntryType
-
-        const verifyResult = await openpgp.verify({
-          message: await openpgp.Message.fromText(nonce.toString()),
-          signature: await openpgp.readSignature({
-            armoredSignature: data.signature,
-          }),
-          publicKeys: await openpgp.readKey({ armoredKey: publicKey }),
-        })
-        if (!verifyResult.signatures[0].verified) throw 'Invalid signature'
-
-        // Generate new nonce
-        await KeyServerEntry.update(
-          { nonce: crypto.randomBytes(4).readUInt32BE(0) },
-          { where: { id: data.userID } }
-        )
+        if (!await verifyNonceSignature(data.userID, data.signature))
+          throw 'Invalid signature'
 
         // Add user to in-memory dictionary of userIDs and socketIDs (this works only with single instance of server)
         addUser(data.userID, socket.id)
@@ -89,7 +69,7 @@ export default function(io: Server) {
           const msg = message.toJSON() as MessagesQueueType
           io.to(userSocketMap[data.userID]).emit('recieve', {
             id: msg.id,
-            timestamp: msg.timestamp,
+            timestamp: Number(new Date(msg.timestamp)),
             message: {
               content: msg.message_content,
               signature: msg.message_signature,
@@ -173,6 +153,9 @@ export default function(io: Server) {
           messageId: data.id,
           to: data.from,
         } as MessageUpdatePayload)
+
+        //Send notification
+        await sendNotification(data.to)
       } catch (error) {
         console.error(error)
       }

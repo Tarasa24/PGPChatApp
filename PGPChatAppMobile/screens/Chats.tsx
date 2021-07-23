@@ -96,6 +96,10 @@ function Chats(props: Props) {
             lastMessage: lastMessage ? lastMessage : null,
           })
         }
+
+        others.sort((a, b) => {
+          return b.lastMessage.timestamp - a.lastMessage.timestamp
+        })
         setUsers({ self: self, others: others })
       }
 

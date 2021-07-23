@@ -1,5 +1,7 @@
 import admin from 'firebase-admin'
 import fs from 'fs/promises'
+import { Model } from 'sequelize/types'
+import { KeyServerEntry, KeyServerEntryType, MessagesQueue } from './models.js'
 
 admin.initializeApp({
   credential: admin.credential.cert(JSON.parse(
@@ -7,16 +9,37 @@ admin.initializeApp({
   ) as admin.ServiceAccount),
 })
 
-var message = {
-  notification: {
-    title: 'PGP ChatApp - Server status update',
-    body: 'Servers are up',
-  },
-  token:
-    'fcmSsR5bQ4m1iHyx3X33Je:APA91bEp5mmvAwe-skRdGK_-Zuu49zkD99i-ToySxVobeYMAq9buNlmrZY2_CznMRQ7IMqcfev2JXMqlEjVPCST01JDWm73PgoppFMGIny4bQcpbMePXAWfR8qOSkHCYShZC6gPA5G1Q',
-}
+export async function sendNotification(to: string) {
+  const userModel = (await KeyServerEntry.findOne({
+    where: { id: to },
+  })) as Model<any, any>
 
-export function sendStatusMessage() {
+  const { notificationToken } = userModel.toJSON() as KeyServerEntryType
+
+  const messagesQueue = await MessagesQueue.findAll({
+    where: { to: to },
+    attributes: ['from'],
+  })
+
+  const numberOfMessages = messagesQueue.length
+  const numberOfContacts = messagesQueue
+    .map((m) => {
+      return m['from']
+    })
+    .filter((value, index, self) => {
+      return self.indexOf(value) === index
+    }).length
+
+  const message = {
+    notification: {
+      title: 'PGPChatApp',
+      body:
+        `${numberOfMessages} New Message${numberOfMessages > 1 ? 's' : ''}` +
+        (numberOfContacts > 1 ? `from ${numberOfContacts} contacts` : ''),
+    },
+    token: notificationToken,
+  }
+
   admin
     .messaging()
     .send(message)
