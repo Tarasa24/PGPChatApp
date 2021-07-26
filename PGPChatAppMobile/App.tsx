@@ -24,6 +24,8 @@ import GenerateAccount from './screens/GenerateAccount'
 import * as ORM from './assets/ts/orm'
 import { Connection } from 'typeorm'
 import * as Socket from './assets/ts/socketio'
+import Gallery from './screens/Gallery'
+import PreviewFile from './screens/PreviewFile'
 
 // Globals
 global.Buffer = global.Buffer || require('buffer').Buffer
@@ -88,6 +90,18 @@ export default function App() {
                         options={{ header: () => <Header title="Profile" /> }}
                       />
                       <Stack.Screen name="Chat" component={Chat} />
+                      <Stack.Screen
+                        name="Gallery"
+                        component={Gallery}
+                        options={{ header: () => <Header title="Gallery" /> }}
+                      />
+                      <Stack.Screen
+                        name="PreviewFile"
+                        component={PreviewFile}
+                        options={{
+                          header: () => <Header title="File Preview" />,
+                        }}
+                      />
                     </StackNavigator>
                   </NavigationContainer>
                 </MenuProvider>

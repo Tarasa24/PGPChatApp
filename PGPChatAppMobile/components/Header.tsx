@@ -64,7 +64,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: Platform.OS == 'ios' ? 20 : 0,
     justifyContent: 'center',
-    borderBottomWidth: 1,
     backgroundColor: 'white',
   },
 })

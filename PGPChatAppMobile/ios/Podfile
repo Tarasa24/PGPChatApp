@@ -26,6 +26,8 @@ target 'PGPChatApp' do
 
   pod 'react-native-video', :path => '../node_modules/react-native-video'
 
+  pod 'RNFileViewer', :path => '../node_modules/react-native-file-viewer'
+
   target 'PGPChatAppTests' do
     inherit! :complete
     # Pods for testing

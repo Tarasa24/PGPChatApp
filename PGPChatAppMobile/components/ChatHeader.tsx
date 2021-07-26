@@ -11,6 +11,7 @@ import {
 import Icon from 'react-native-ionicons'
 import { File, Message, User } from '../assets/ts/orm'
 import Avatar from './Avatar'
+import * as Gallery from '../screens/Gallery'
 import { useTheme } from './ThemeContext'
 import {
   Menu,
@@ -99,7 +100,13 @@ function ChatHeader(props: Props) {
                   Search
                 </Text>
               </MenuOption>
-              <MenuOption onSelect={() => {}}>
+              <MenuOption
+                onSelect={() => {
+                  navigation.navigate('Gallery', {
+                    user: props.user,
+                  } as Gallery.RouteParams)
+                }}
+              >
                 <Text
                   style={{ ...styles.optionText, color: theme.colors.text }}
                 >
@@ -130,9 +137,7 @@ function ChatHeader(props: Props) {
                     .createQueryBuilder()
                     .delete()
                     .from(File)
-                    .where('parentMessage In(:id)', {
-                      id: ids.join(', '),
-                    })
+                    .where(`parentMessageId In('${ids.join("', '")}')`)
                     .execute()
 
                   await getConnection()
