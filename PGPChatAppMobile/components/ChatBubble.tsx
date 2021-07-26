@@ -18,6 +18,8 @@ import Clipboard from '@react-native-clipboard/clipboard'
 import { timeHandler } from '../assets/ts/helperFunctions'
 import * as RNFS from 'react-native-fs'
 import Video from 'react-native-video'
+import { useNavigation } from '@react-navigation/native'
+import { PreviewFileType } from '../screens/PreviewFile'
 
 interface Props {
   localUser: LocalUserState
@@ -29,6 +31,7 @@ function ChatBubble(props: Props) {
   const theme = useTheme()
   const isAuthorMe = props.message.author === props.localUser.id
   const menuRef = useRef<Menu>()
+  const navigation = useNavigation()
 
   const [filesb64, setFilesb64] = useState([] as string[])
 
@@ -84,49 +87,88 @@ function ChatBubble(props: Props) {
         if (b64 !== null) {
           if (props.message.files[i].name.includes('.mp4'))
             return (
-              <Video
+              <TouchableOpacity
+                activeOpacity={1}
                 key={i}
-                source={{ uri: props.message.files[i].uri }}
-                volume={0}
-                repeat={true}
-                resizeMode="contain"
-                style={{ height: 150, marginVertical: 10 }}
-              />
+                onPress={() => {
+                  if (!menuRef.current.isOpen())
+                    navigation.navigate('PreviewFile', {
+                      file: Object.assign(props.message.files[i], {
+                        b64: b64,
+                        parentMessageId: props.message.id,
+                      }) as PreviewFileType,
+                    })
+                }}
+              >
+                <Video
+                  source={{ uri: props.message.files[i].uri }}
+                  volume={0}
+                  repeat={true}
+                  resizeMode="contain"
+                  style={{ height: 150, marginVertical: 10 }}
+                />
+              </TouchableOpacity>
             )
           else
             return (
-              <Image
+              <TouchableOpacity
+                activeOpacity={1}
                 key={i}
-                style={{
-                  height: 150,
-                  width: '100%',
-                  resizeMode: 'contain',
-                  borderRadius: 5,
-                  marginVertical: 5,
+                onPress={() => {
+                  if (!menuRef.current.isOpen())
+                    navigation.navigate('PreviewFile', {
+                      file: Object.assign(props.message.files[i], {
+                        b64: b64,
+                        parentMessageId: props.message.id,
+                      }) as PreviewFileType,
+                    })
                 }}
-                source={{
-                  uri: `data:${props.message.files[i].mime};base64,${b64}`,
-                }}
-              />
+              >
+                <Image
+                  style={{
+                    height: 150,
+                    width: '100%',
+                    resizeMode: 'contain',
+                    borderRadius: 5,
+                    marginVertical: 5,
+                  }}
+                  source={{
+                    uri: `data:${props.message.files[i].mime};base64,${b64}`,
+                  }}
+                />
+              </TouchableOpacity>
             )
         } else
           return (
-            <View
+            <TouchableOpacity
+              activeOpacity={1}
               key={i}
-              style={{
-                justifyContent: 'center',
-                alignItems: 'center',
-                marginVertical: 10,
+              onPress={() => {
+                if (!menuRef.current.isOpen())
+                  navigation.navigate('PreviewFile', {
+                    file: Object.assign(props.message.files[i], {
+                      b64: b64,
+                      parentMessageId: props.message.id,
+                    }) as PreviewFileType,
+                  })
               }}
             >
-              <Icon name="document" size={50} color={theme.colors.text} />
-              <Text
-                style={{ color: theme.colors.text, fontSize: 12 }}
-                numberOfLines={1}
+              <View
+                style={{
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  marginVertical: 10,
+                }}
               >
-                {props.message.files[i].name}
-              </Text>
-            </View>
+                <Icon name="document" size={50} color={theme.colors.text} />
+                <Text
+                  style={{ color: theme.colors.text, fontSize: 12 }}
+                  numberOfLines={1}
+                >
+                  {props.message.files[i].name}
+                </Text>
+              </View>
+            </TouchableOpacity>
           )
       })
     }
