@@ -144,9 +144,7 @@ function ChatHeader(props: Props) {
                     .createQueryBuilder()
                     .delete()
                     .from(Message)
-                    .where('id In(:id)', {
-                      id: ids.join(', '),
-                    })
+                    .where(`id In('${ids.join("', '")}')`)
                     .execute()
 
                   const userRepository = getRepository(User)

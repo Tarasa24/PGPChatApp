@@ -88,7 +88,7 @@ export default function PreviewFile(props: Props) {
         </TouchableOpacity>
       </View>
       <View style={{ flex: 1, height: 175, backgroundColor: 'rgba(0,0,0,.4)' }}>
-        <Text style={{ color: theme.colors.text, textAlign: 'center' }}>
+        <Text style={{ color: 'white', textAlign: 'center' }}>
           {props.route.params.file.uri}
         </Text>
         <Text style={{ color: 'grey', textAlign: 'center', marginTop: 5 }}>
