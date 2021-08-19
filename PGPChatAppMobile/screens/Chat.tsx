@@ -600,7 +600,7 @@ function Chat(props: Props) {
       </View>
 
       {addFileMenuOpened ? (
-        <View style={{ height: '27.5%' }}>
+        <View style={{ height: 115 }}>
           <ScrollView horizontal={true} style={{ height: '100%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <TouchableOpacity
