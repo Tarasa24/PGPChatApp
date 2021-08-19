@@ -36,6 +36,13 @@ export default function App() {
   const [connected, setConnected] = React.useState(false)
 
   React.useEffect(() => {
+    setTimeout(() => {
+      store.dispatch({
+        type: 'SET_SOCKET_CONNECTING',
+        payload: {},
+      })
+    }, 1)
+
     // Connect & sync interal db and initialize socket connection
     Socket.connect()
     ORM.connect().then((connection: Connection) => setConnected(true))

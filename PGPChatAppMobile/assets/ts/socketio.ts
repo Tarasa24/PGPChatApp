@@ -110,6 +110,11 @@ async function emitUnsentMessages(socket: any) {
 }
 
 async function login(socket: any) {
+  store.dispatch({
+    type: 'SET_SOCKET_CONNECTING',
+    payload: {},
+  } as socketConnectedReducer.Action)
+
   const localuser = store.getState().localUserReducer
   if (!localuser.id) {
     socket.disconnect()
@@ -138,13 +143,8 @@ async function login(socket: any) {
 }
 
 function connect() {
-  store.dispatch({
-    type: 'SET_SOCKET_CONNECTING',
-    payload: {},
-  } as socketConnectedReducer.Action)
-
-  socket.on('connect', async () => {
-    await login(socket)
+  socket.on('connect', () => {
+    login(socket)
   })
 
   socket.on('recieve', async (payload: SendPayload) => {
@@ -332,6 +332,17 @@ function connect() {
           type: 'SET_SOCKET_DISCONNECTED',
           payload: {},
         } as socketConnectedReducer.Action)
+
+        setTimeout(() => {
+          if (
+            store.getState().socketConnectedReducer ==
+            socketConnectedReducer.StateEnum.Disconnected
+          )
+            store.dispatch({
+              type: 'SET_SOCKET_CONNECTING',
+              payload: {},
+            } as socketConnectedReducer.Action)
+        }, 2000)
       })
   })
 }
