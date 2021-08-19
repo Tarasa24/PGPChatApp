@@ -45,7 +45,11 @@ export default function App() {
 
     // Connect & sync interal db and initialize socket connection
     Socket.connect()
-    ORM.connect().then((connection: Connection) => setConnected(true))
+    ORM.connect().then(async (connection: Connection) => {
+      await connection.runMigrations()
+      await connection.synchronize()
+      setConnected(true)
+    })
 
     // Obtain necessary permissions
     PermissionsAndroid.requestMultiple([

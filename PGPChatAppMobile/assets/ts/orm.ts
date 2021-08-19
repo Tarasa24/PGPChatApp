@@ -96,9 +96,8 @@ export function connect() {
       database: 'db',
       location: 'default',
       logging: ['error'],
-      synchronize: false,
-      migrationsRun: true,
       entities: [File, User, Message],
+      migrations: [],
     })
   } else return new Promise(() => {})
 }
