@@ -77,6 +77,11 @@ function Chat(props: Props) {
 
   const [addFileMenuOpened, setAddFileMenuOpened] = useState(false)
 
+  function shouldScrollDown() {
+    if (scrollViewRef) return true
+    else return false
+  }
+
   async function loadMessages() {
     const messageRepository = getRepository(Message)
 
@@ -149,14 +154,9 @@ function Chat(props: Props) {
         'keyboardDidShow',
         () => {
           setAddFileMenuOpened(false)
-          scrollViewRef.scrollToEnd({ animated: false })
+          if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: false })
         }
       )
-
-      if (scrollViewRef)
-        setTimeout(() => {
-          scrollViewRef.scrollToEnd({ animated: false })
-        }, 200)
       return () => {
         keyboardDidShowListener.remove()
       }
@@ -167,7 +167,6 @@ function Chat(props: Props) {
   useEffect(
     () => {
       loadMessages().then(() => {
-        if (scrollViewRef) scrollViewRef.scrollToEnd({ animated: false })
         sendReadStatus()
       })
     },
@@ -181,7 +180,6 @@ function Chat(props: Props) {
         function() {
           if (addFileMenuOpened) {
             setAddFileMenuOpened(false)
-            scrollViewRef.scrollToEnd({ animated: false })
             return true
           } else {
             navigation.goBack()
@@ -275,8 +273,6 @@ function Chat(props: Props) {
     } as SendPayload)
 
     props.addToMessageUpdateList(message.id)
-
-    scrollViewRef.scrollToEnd({ animated: false })
   }
 
   function sendAddButton(forceAdd = false) {
@@ -312,9 +308,6 @@ function Chat(props: Props) {
           onPress={() => {
             Keyboard.dismiss()
             setAddFileMenuOpened(!addFileMenuOpened)
-            setTimeout(() => {
-              scrollViewRef.scrollToEnd({ animated: false })
-            }, 1)
           }}
         >
           <Icon color="white" name="add" />
@@ -391,6 +384,10 @@ function Chat(props: Props) {
           ref={(ref) => {
             setScrollViewRef(ref)
           }}
+          onContentSizeChange={() => {
+            if (shouldScrollDown())
+              scrollViewRef.scrollToEnd({ animated: false })
+          }}
         >
           <View
             style={{
@@ -418,9 +415,9 @@ function Chat(props: Props) {
 
   useEffect(
     () => {
-      if (scrollViewRef) scrollViewRef.scrollToEnd({ animated: false })
+      if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: false })
     },
-    [inlineFiles]
+    [inlineFiles, addFileMenuOpened]
   )
 
   function showInlineFiles() {
