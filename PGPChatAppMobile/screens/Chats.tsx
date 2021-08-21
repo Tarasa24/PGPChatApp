@@ -24,7 +24,7 @@ import ChatsHeader from '../components/ChatsHeader'
 import { useTheme } from '../components/ThemeContext'
 import { LocalUserState } from '../store/reducers/localUserReducer'
 import * as Chat from './Chat'
-import { timeHandler } from '../assets/ts/helperFunctions'
+import Time from '../components/Time'
 
 interface Props {
   localUser: LocalUserState
@@ -230,13 +230,13 @@ function Chats(props: Props) {
                   {highlightNewMessage(other.lastMessage)}
                 </View>
                 <View style={styles.status}>
-                  <Text style={{ color: theme.colors.text }}>
-                    {other.lastMessage ? (
-                      timeHandler(other.lastMessage.timestamp)
-                    ) : (
-                      ' '
-                    )}
-                  </Text>
+                  {other.lastMessage && (
+                    <Time
+                      timestamp={other.lastMessage.timestamp}
+                      style={{ color: theme.colors.text }}
+                    />
+                  )}
+
                   {other.lastMessage ? statusIcon(other.lastMessage) : null}
                 </View>
               </View>

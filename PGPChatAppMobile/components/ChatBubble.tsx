@@ -15,11 +15,11 @@ import {
   renderers,
 } from 'react-native-popup-menu'
 import Clipboard from '@react-native-clipboard/clipboard'
-import { timeHandler } from '../assets/ts/helperFunctions'
 import * as RNFS from 'react-native-fs'
 import Video from 'react-native-video'
 import { useNavigation } from '@react-navigation/native'
 import { PreviewFileType } from '../screens/PreviewFile'
+import Time from './Time'
 
 interface Props {
   localUser: LocalUserState
@@ -228,9 +228,10 @@ function ChatBubble(props: Props) {
                   marginTop: 7.5,
                 }}
               >
-                <Text style={{ color: theme.colors.text, marginRight: 5 }}>
-                  {timeHandler(props.message.timestamp)}
-                </Text>
+                <Time
+                  timestamp={props.message.timestamp}
+                  style={{ color: theme.colors.text, marginRight: 5 }}
+                />
                 {isAuthorMe ? statusIcon(props.message.status) : null}
               </View>
             </View>
