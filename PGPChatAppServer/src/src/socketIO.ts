@@ -85,9 +85,9 @@ export default function(io: Server) {
         })
 
         for (const update of updates) {
-          io
-            .to(userSocketMap[data.userID])
-            .emit('messageUpdate', update.toJSON() as MessageUpdatePayload)
+          const up = update.toJSON() as MessageUpdatePayload
+          up.timestamp = Number(new Date(up.timestamp))
+          io.to(userSocketMap[data.userID]).emit('messageUpdate', up)
         }
       } catch (error) {
         console.error(error)
@@ -166,12 +166,23 @@ export default function(io: Server) {
       try {
         checkLogin(socket)
 
+        // Check if the message set to be deleted is still in the queue. If so, it deletes it and sends only the update
+        data.action === 'DELETE' &&
+          (await MessagesQueue.destroy({
+            where: {
+              id: data.messageId,
+            },
+          }))
+
+        const now = Date.now()
+
         if (userSocketMap[data.to])
           io.to(userSocketMap[data.to]).emit('messageUpdate', {
             action: data.action,
             messageId: data.messageId,
             to: data.to,
             from: socketUserMap[socket.id],
+            timestamp: now,
           } as MessageUpdatePayload)
 
         await MessageUpdateQueue.create({
@@ -179,6 +190,7 @@ export default function(io: Server) {
           messageId: data.messageId,
           to: data.to,
           from: socketUserMap[socket.id],
+          timestamp: now,
         } as MessageUpdatePayload)
       } catch (error) {
         console.error(error)

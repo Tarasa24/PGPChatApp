@@ -44,11 +44,12 @@ export default function App() {
     }, 1)
 
     // Connect & sync interal db and initialize socket connection
-    Socket.connect()
     ORM.connect().then(async (connection: Connection) => {
       await connection.runMigrations()
       await connection.synchronize()
       setConnected(true)
+
+      await Socket.connect()
     })
 
     // Obtain necessary permissions

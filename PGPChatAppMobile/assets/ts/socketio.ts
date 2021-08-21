@@ -1,6 +1,6 @@
 import OpenPGP from 'react-native-fast-openpgp'
 import { io } from 'socket.io-client'
-import { getRepository } from 'typeorm'
+import { getConnection, getRepository } from 'typeorm'
 import DeviceInfo from 'react-native-device-info'
 import * as messageUpdatesListReducer from '../../store/reducers/messageUpdatesListReducer'
 import * as socketConnectedReducer from '../../store/reducers/socketConnectedReducer'
@@ -142,7 +142,7 @@ async function login(socket: any) {
   await emitUnsentMessages(socket)
 }
 
-function connect() {
+async function connect() {
   socket.on('connect', () => {
     login(socket)
   })
@@ -257,35 +257,61 @@ function connect() {
 
     try {
       const messageRepository = await getRepository(ORM.Message)
+      const userRepository = await getRepository(ORM.User)
       const fileRepository = await getRepository(ORM.File)
 
       switch (payload.action) {
         case 'SET_STATUS_SENT':
-          await messageRepository.update(
-            { id: payload.messageId },
-            {
+          await getConnection()
+            .createQueryBuilder()
+            .update(ORM.Message)
+            .set({
               status: ORM.MessageStatus.sent,
               timestamp: Number(new Date(payload.timestamp)),
-            }
-          )
+            })
+            .where('id = :id', { id: payload.messageId })
+            .andWhere('status != :status', {
+              status: ORM.MessageStatus.deleted,
+            })
+            .execute()
+
           break
         case 'SET_STATUS_RECIEVED':
-          await messageRepository.update(
-            { id: payload.messageId },
-            { status: ORM.MessageStatus.recieved }
-          )
+          await getConnection()
+            .createQueryBuilder()
+            .update(ORM.Message)
+            .set({
+              status: ORM.MessageStatus.recieved,
+            })
+            .where('id = :id', { id: payload.messageId })
+            .andWhere('status != :status', {
+              status: ORM.MessageStatus.deleted,
+            })
+            .execute()
           break
         case 'SET_STATUS_READ':
-          await messageRepository.update(
-            { id: payload.messageId },
-            { status: ORM.MessageStatus.read }
-          )
+          await getConnection()
+            .createQueryBuilder()
+            .update(ORM.Message)
+            .set({
+              status: ORM.MessageStatus.read,
+            })
+            .where('id = :id', { id: payload.messageId })
+            .andWhere('status != :status', {
+              status: ORM.MessageStatus.deleted,
+            })
+            .execute()
           break
         case 'DELETE':
-          await messageRepository.update(
-            { id: payload.messageId },
-            { status: ORM.MessageStatus.deleted, text: '' }
-          )
+          const message = new ORM.Message()
+          message.id = payload.messageId
+          message.recipient = await userRepository.findOne({ id: payload.to })
+          message.author = await userRepository.findOne({ id: payload.from })
+          message.text = ''
+          message.timestamp = payload.timestamp
+          message.status = ORM.MessageStatus.deleted
+
+          await messageRepository.save(message)
 
           await fileRepository.delete({
             parentMessage: await messageRepository.findOne({
@@ -345,6 +371,9 @@ function connect() {
         }, 2000)
       })
   })
+
+  // I have no idea why do I have invoke this manually. But it is what fixed having socket.connect() inside async callback in App.tsx
+  await login(socket)
 }
 
 export { socket, connect }

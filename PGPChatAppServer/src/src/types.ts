@@ -36,5 +36,5 @@ export type MessageUpdatePayload = {
     | 'SET_STATUS_RECIEVED'
     | 'SET_STATUS_READ'
     | 'DELETE'
-  timestamp?: number
+  timestamp: number
 }

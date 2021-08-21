@@ -66,8 +66,12 @@ export const MessageUpdateQueue = sequelize.define(
     messageId: DataTypes.STRING(36),
     action: DataTypes.STRING,
     to: DataTypes.STRING(28),
+    from: DataTypes.STRING(28),
+    timestamp: DataTypes.DATE,
   },
   {
     freezeTableName: true,
+    updatedAt: false,
+    createdAt: false,
   }
 )
