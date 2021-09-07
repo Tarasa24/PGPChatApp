@@ -12,7 +12,24 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
+      - name: Use Node.js 14.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+      - name: Cache node modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('PGPChatAppLandingPage/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-build-${{ env.cache-name }}-
+            ${{ runner.os }}-build-
+            ${{ runner.os }}-
+      - name: Instal npm packages
+        working-directory: ./PGPChatAppLandingPage
+        run: npm ci
       - name: Install and Build
+        working-directory: ./PGPChatAppLandingPage
         run: |
           npm install
           npm run build
@@ -21,4 +38,4 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@4.1.5
         with:
           branch: gh-pages
-          folder: dist
+          folder: ./PGPChatAppLandingPage/dist
