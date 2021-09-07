@@ -75,3 +75,34 @@ export const MessageUpdateQueue = sequelize.define(
     createdAt: false,
   }
 )
+
+export const OngoingCalls = sequelize.define(
+  'OngoingCalls',
+  {
+    caller: {
+      type: DataTypes.STRING(28),
+      unique: true,
+    },
+    callerPeerToken: DataTypes.STRING(36),
+    callee: {
+      type: DataTypes.STRING(28),
+      unique: true,
+    },
+    calleePeerToken: DataTypes.STRING(36),
+  },
+  {
+    freezeTableName: true,
+    updatedAt: false,
+  }
+)
+
+export type OngoingCallsType = {
+  id: number
+
+  caller: string
+  callerPeerToken: string
+  callee: string
+  calleePeerToken: string
+
+  createdAt: Date
+}

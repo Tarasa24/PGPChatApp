@@ -28,6 +28,8 @@ target 'PGPChatApp' do
 
   pod 'RNFileViewer', :path => '../node_modules/react-native-file-viewer'
 
+  pod 'react-native-webrtc', :path => '../node_modules/react-native-webrtc'
+
   target 'PGPChatAppTests' do
     inherit! :complete
     # Pods for testing

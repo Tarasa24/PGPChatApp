@@ -14,9 +14,10 @@ import Chat from './screens/Chat'
 import AddUser from './screens/AddUser'
 import Profile from './screens/Profile'
 import Header from './components/Header'
+import Call from './screens/Call'
 
 // Import custom
-import { ThemeProvider } from './components/ThemeContext'
+import { ThemeProvider, useTheme } from './components/ThemeContext'
 import StackNavigator from './components/StackNavigator'
 import { persistor, store } from './store/store'
 import LandingPage from './screens/LandingPage'
@@ -26,6 +27,8 @@ import { Connection } from 'typeorm'
 import * as Socket from './assets/ts/socketio'
 import Gallery from './screens/Gallery'
 import PreviewFile from './screens/PreviewFile'
+import PushNotification from 'react-native-push-notification'
+import { navigationRef } from './assets/ts/navigation'
 
 // Globals
 global.Buffer = global.Buffer || require('buffer').Buffer
@@ -50,6 +53,9 @@ export default function App() {
       setConnected(true)
 
       await Socket.connect()
+
+      // Clear recieved notifications
+      PushNotification.removeAllDeliveredNotifications()
     })
 
     // Obtain necessary permissions
@@ -75,47 +81,60 @@ export default function App() {
             <AppearanceProvider>
               <ThemeProvider>
                 <MenuProvider backHandler={true}>
-                  <NavigationContainer>
-                    <StackNavigator Stack={Stack}>
-                      <Stack.Screen
-                        name="LandingPage"
-                        component={LandingPage}
-                        options={{ headerShown: false }}
-                      />
-                      <Stack.Screen
-                        name="GenerateAccount"
-                        component={GenerateAccount}
-                        options={{
-                          header: () => <Header title="Generate Account" />,
-                        }}
-                      />
+                  <ThemedBackground>
+                    <NavigationContainer ref={navigationRef}>
+                      <StackNavigator Stack={Stack}>
+                        <Stack.Screen
+                          name="LandingPage"
+                          component={LandingPage}
+                          options={{ headerShown: false }}
+                        />
+                        <Stack.Screen
+                          name="GenerateAccount"
+                          component={GenerateAccount}
+                          options={{
+                            header: () => <Header title="Generate Account" />,
+                          }}
+                        />
 
-                      <Stack.Screen name="Chats" component={Chats} />
-                      <Stack.Screen
-                        name="AddUser"
-                        component={AddUser}
-                        options={{ header: () => <Header title="Add User" /> }}
-                      />
-                      <Stack.Screen
-                        name="Profile"
-                        component={Profile}
-                        options={{ header: () => <Header title="Profile" /> }}
-                      />
-                      <Stack.Screen name="Chat" component={Chat} />
-                      <Stack.Screen
-                        name="Gallery"
-                        component={Gallery}
-                        options={{ header: () => <Header title="Gallery" /> }}
-                      />
-                      <Stack.Screen
-                        name="PreviewFile"
-                        component={PreviewFile}
-                        options={{
-                          header: () => <Header title="File Preview" />,
-                        }}
-                      />
-                    </StackNavigator>
-                  </NavigationContainer>
+                        <Stack.Screen name="Chats" component={Chats} />
+                        <Stack.Screen
+                          name="AddUser"
+                          component={AddUser}
+                          options={{
+                            header: () => <Header title="Add User" />,
+                          }}
+                        />
+                        <Stack.Screen
+                          name="Profile"
+                          component={Profile}
+                          options={{ header: () => <Header title="Profile" /> }}
+                        />
+                        <Stack.Screen name="Chat" component={Chat} />
+                        <Stack.Screen
+                          name="Gallery"
+                          component={Gallery}
+                          options={{ header: () => <Header title="Gallery" /> }}
+                        />
+                        <Stack.Screen
+                          name="PreviewFile"
+                          component={PreviewFile}
+                          options={{
+                            header: () => <Header title="File Preview" />,
+                          }}
+                        />
+                        <Stack.Screen
+                          name="Call"
+                          component={Call}
+                          options={{
+                            header: () => (
+                              <Header title="Call" goBackButton={false} />
+                            ),
+                          }}
+                        />
+                      </StackNavigator>
+                    </NavigationContainer>
+                  </ThemedBackground>
                 </MenuProvider>
               </ThemeProvider>
             </AppearanceProvider>
@@ -125,4 +144,19 @@ export default function App() {
   }
 
   return evalConnected()
+}
+
+function ThemedBackground(props) {
+  const theme = useTheme()
+
+  return (
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: theme.colors.background,
+      }}
+    >
+      {props.children}
+    </View>
+  )
 }

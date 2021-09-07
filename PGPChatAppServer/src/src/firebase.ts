@@ -9,7 +9,20 @@ admin.initializeApp({
   ) as admin.ServiceAccount),
 })
 
-export async function sendNotification(to: string) {
+type DismissCallPayload = IncomingCallPayload
+interface IncomingCallPayload {
+  caller: string
+  callee: string
+}
+export interface NotificationData {
+  COMMAND?: 'DELETE_ALL_NOTIFICATIONS' | 'INCOMING_CALL' | 'DISMISS_CALL'
+  PAYLOAD: undefined | IncomingCallPayload | DismissCallPayload
+}
+
+export async function sendNotification(
+  to: string,
+  data: NotificationData | null = null
+) {
   const userModel = (await KeyServerEntry.findOne({
     where: { id: to },
   })) as Model<any, any>
@@ -30,23 +43,53 @@ export async function sendNotification(to: string) {
       return self.indexOf(value) === index
     }).length
 
-  const message = {
+  const message: admin.messaging.Message = {
     notification: {
-      title: 'PGPChatApp',
+      title: 'PGP ChatApp',
       body:
         `${numberOfMessages} New Message${numberOfMessages > 1 ? 's' : ''}` +
         (numberOfContacts > 1 ? `from ${numberOfContacts} contacts` : ''),
     },
+    android: {
+      notification: {
+        tag: 'MessageNotification',
+      },
+    },
     token: notificationToken,
   }
 
-  admin
-    .messaging()
-    .send(message)
-    .then((response) => {
-      console.log('Successfully sent message:', response)
+  if (data === null) {
+    const removeAllNotificationsCommand: admin.messaging.Message = {
+      data: {
+        COMMAND: 'DELETE_ALL_NOTIFICATIONS',
+      },
+      token: notificationToken,
+    }
+    admin
+      .messaging()
+      .send(numberOfMessages > 0 ? message : removeAllNotificationsCommand)
+      .then((response) => {
+        console.log('Successfully sent message:', response)
+      })
+      .catch((error) => {
+        console.log('Error sending message:', error)
+      })
+  } else {
+    Object.keys(data).forEach((key) => {
+      if (typeof data[key] === 'object') data[key] = JSON.stringify(data[key])
     })
-    .catch((error) => {
-      console.log('Error sending message:', error)
-    })
+
+    admin
+      .messaging()
+      .send({
+        data: data as any,
+        token: notificationToken,
+      })
+      .then((response) => {
+        console.log('Successfully sent message:', response)
+      })
+      .catch((error) => {
+        console.log('Error sending message:', error)
+      })
+  }
 }

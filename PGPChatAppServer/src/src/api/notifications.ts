@@ -48,7 +48,6 @@ router.put(
   '/registerToken',
   async (req: Request<{}, {}, registerTokenBody>, res) => {
     try {
-      console.log(req.body.token)
       // Syntax check
       if (!req.body.id || !req.body.signature || !req.body.signature) {
         res.sendStatus(400)

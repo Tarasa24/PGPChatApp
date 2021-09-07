@@ -9,6 +9,8 @@ import { fetchRest, ping } from './api'
 import * as ORM from './orm'
 import * as RNFS from 'react-native-fs'
 import RNFetchBlob from 'rn-fetch-blob'
+import * as Call from '../../screens/Call'
+import * as navigation from './navigation'
 
 type UserID = string
 type LoginPayload = {
@@ -39,6 +41,13 @@ export type MessageUpdatePayload = {
     | 'SET_STATUS_READ'
     | 'DELETE'
   timestamp?: number
+}
+
+export type CallPayload = {
+  caller: string
+  callerPeerToken: string
+  callee: string
+  calleePeerToken: string
 }
 
 // TODO: Add production url
@@ -332,6 +341,25 @@ async function connect() {
     } catch (error) {
       console.error(error)
     }
+  })
+
+  socket.on('call', async (payload: CallPayload) => {
+    if (
+      [payload.caller, payload.callee].includes(
+        store.getState().localUserReducer.id
+      ) &&
+      navigation.getCurrentRoute().name !== 'Call'
+    )
+      navigation.navigate('Call', {
+        caller: payload.caller,
+        callerPeerToken: payload.callerPeerToken,
+        callee: payload.callee,
+        calleePeerToken: payload.calleePeerToken,
+      } as Call.RouteParams)
+  })
+
+  socket.on('endCall', async (payload: CallPayload & { reason: string }) => {
+    if (navigation.getCurrentRoute().name === 'Call') navigation.goBack()
   })
 
   socket.on('reconnect_attempt', () => {

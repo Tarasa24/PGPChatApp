@@ -38,3 +38,10 @@ export type MessageUpdatePayload = {
     | 'DELETE'
   timestamp: number
 }
+
+export type CallPayload = {
+  caller: string
+  callerPeerToken: string
+  callee: string
+  calleePeerToken: string
+}

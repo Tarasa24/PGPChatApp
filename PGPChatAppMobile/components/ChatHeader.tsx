@@ -23,6 +23,9 @@ import { getConnection, getRepository } from 'typeorm'
 import * as messageUpdatesListReducer from '../store/reducers/messageUpdatesListReducer'
 import { connect } from 'react-redux'
 import SocketConnectionStatus from './SocketConnectionStatus'
+import { store } from '../store/store'
+import { CallPayload, socket } from '../assets/ts/socketio'
+import uuid from 'react-native-uuid'
 
 interface Props {
   user: User
@@ -73,7 +76,20 @@ function ChatHeader(props: Props) {
             {props.user.name ? props.user.name : props.user.id}
           </Text>
 
-          <Icon name="call" size={25} color="white" style={styles.icon} />
+          <TouchableOpacity
+            onPress={() => {
+              socket.emit('call', {
+                caller: store.getState().localUserReducer.id,
+                callerPeerToken: uuid.v4().toString(),
+                callee: props.user.id,
+                calleePeerToken: uuid.v4().toString(),
+              } as CallPayload)
+            }}
+            style={styles.icon}
+            activeOpacity={0.7}
+          >
+            <Icon name="call" size={25} color="white" />
+          </TouchableOpacity>
 
           <Menu>
             <MenuTrigger>
