@@ -12,7 +12,7 @@ import PushNotification from 'react-native-push-notification'
 import OpenPGP from 'react-native-fast-openpgp'
 import { fetchRest } from './assets/ts/api'
 import { store } from './store/store'
-import RNCallKeep, { IOptions } from 'react-native-callkeep'
+import RNCallKeep from 'react-native-callkeep'
 
 const options = {
   ios: {
@@ -25,19 +25,9 @@ const options = {
     cancelButton: 'Cancel',
     okButton: 'Grant',
   },
-} as IOptions
+}
 
 RNCallKeep.setup(options)
-
-interface IncomingCallPaload {
-  caller: string
-  callee: string
-}
-
-interface NotificationCommands {
-  COMMAND: 'DELETE_ALL_NOTIFICATIONS' | 'INCOMING_CALL' | 'DISMISS_CALL'
-  PAYLOAD: undefined | IncomingCallPaload
-}
 
 PushNotification.configure({
   // (optional) Called when Token is generated (iOS and Android)
@@ -69,9 +59,9 @@ PushNotification.configure({
   // (required) Called when a remote is received or opened, or local notification is opened
   onNotification: async (notification) => {
     if (notification.data['COMMAND'] !== undefined) {
-      const data = notification.data as NotificationCommands
+      const data = notification.data
       if (notification.data['PAYLOAD'] !== undefined)
-        data.PAYLOAD = JSON.parse((data.PAYLOAD as unknown) as string)
+        data.PAYLOAD = JSON.parse(data.PAYLOAD)
 
       switch (data.COMMAND) {
         case 'DELETE_ALL_NOTIFICATIONS':
