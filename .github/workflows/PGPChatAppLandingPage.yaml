@@ -33,7 +33,7 @@ jobs:
         run: yarn install
       - name: Build
         working-directory: ./PGPChatAppLandingPage
-        run: yarn run build
+        run: yarn run build --base=./
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@4.1.5
