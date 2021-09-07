@@ -1,8 +1,7 @@
-import { CustomExpress } from 'peer'
 import { OngoingCalls } from './models.js'
 import Sequelize from 'sequelize'
 
-export default function initPeerServer(peerServer: CustomExpress) {
+export default function initPeerServer(peerServer: any) {
   peerServer.on('connection', async (client) => {
     const clientID = client.getId()
     const callExists =
