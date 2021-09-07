@@ -16,23 +16,23 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 14.x
+          cache: 'yarn'
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "::set-output name=dir::$(yarn cache dir)"
       - name: Cache node modules
-        uses: actions/cache@v2
+        id: yarn-cache
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('PGPChatAppLandingPage/package-lock.json') }}
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('PGPChatAppLandingPage/yarn.lock') }}
           restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-      - name: Instal npm packages
+            ${{ runner.os }}-yarn-
+      - name: Yarn install
         working-directory: ./PGPChatAppLandingPage
-        run: npm ci
-      - name: Install and Build
+        run: yarn install
+      - name: Build
         working-directory: ./PGPChatAppLandingPage
-        run: |
-          npm install
-          npm run build
+        run: yarn run build
 
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@4.1.5
