@@ -22,6 +22,14 @@ target 'PGPChatApp' do
 
   pod 'react-native-appearance', :path => '../node_modules/react-native-appearance'
 
+  pod 'react-native-image-keyboard', :path => '../node_modules/react-native-image-keyboard'
+
+  pod 'react-native-video', :path => '../node_modules/react-native-video'
+
+  pod 'RNFileViewer', :path => '../node_modules/react-native-file-viewer'
+
+  pod 'react-native-webrtc', :path => '../node_modules/react-native-webrtc'
+
   target 'PGPChatAppTests' do
     inherit! :complete
     # Pods for testing

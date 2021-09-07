@@ -9,8 +9,9 @@ import {
   View,
 } from 'react-native'
 import Icon from 'react-native-ionicons'
-import { Message, User } from '../assets/ts/orm'
+import { File, Message, User } from '../assets/ts/orm'
 import Avatar from './Avatar'
+import * as Gallery from '../screens/Gallery'
 import { useTheme } from './ThemeContext'
 import {
   Menu,
@@ -22,6 +23,9 @@ import { getConnection, getRepository } from 'typeorm'
 import * as messageUpdatesListReducer from '../store/reducers/messageUpdatesListReducer'
 import { connect } from 'react-redux'
 import SocketConnectionStatus from './SocketConnectionStatus'
+import { store } from '../store/store'
+import { CallPayload, socket } from '../assets/ts/socketio'
+import uuid from 'react-native-uuid'
 
 interface Props {
   user: User
@@ -72,7 +76,20 @@ function ChatHeader(props: Props) {
             {props.user.name ? props.user.name : props.user.id}
           </Text>
 
-          <Icon name="call" size={25} color="white" style={styles.icon} />
+          <TouchableOpacity
+            onPress={() => {
+              socket.emit('call', {
+                caller: store.getState().localUserReducer.id,
+                callerPeerToken: uuid.v4().toString(),
+                callee: props.user.id,
+                calleePeerToken: uuid.v4().toString(),
+              } as CallPayload)
+            }}
+            style={styles.icon}
+            activeOpacity={0.7}
+          >
+            <Icon name="call" size={25} color="white" />
+          </TouchableOpacity>
 
           <Menu>
             <MenuTrigger>
@@ -99,7 +116,13 @@ function ChatHeader(props: Props) {
                   Search
                 </Text>
               </MenuOption>
-              <MenuOption onSelect={() => {}}>
+              <MenuOption
+                onSelect={() => {
+                  navigation.navigate('Gallery', {
+                    user: props.user,
+                  } as Gallery.RouteParams)
+                }}
+              >
                 <Text
                   style={{ ...styles.optionText, color: theme.colors.text }}
                 >
@@ -115,20 +138,36 @@ function ChatHeader(props: Props) {
               </MenuOption>
               <MenuOption
                 onSelect={async () => {
+                  let ids = await getConnection()
+                    .createQueryBuilder()
+                    .select('message.id', 'id')
+                    .from(Message, 'message')
+                    .where('message.author = :from', { from: props.user.id })
+                    .orWhere('message.recipient = :to', { to: props.user.id })
+                    .execute()
+                  ids = ids.map((id) => {
+                    return id.id
+                  })
+
+                  await getConnection()
+                    .createQueryBuilder()
+                    .delete()
+                    .from(File)
+                    .where(`parentMessageId In('${ids.join("', '")}')`)
+                    .execute()
+
                   await getConnection()
                     .createQueryBuilder()
                     .delete()
                     .from(Message)
-                    .where('author = :from', { from: props.user.id })
-                    .orWhere('recipient = :to', { to: props.user.id })
+                    .where(`id In('${ids.join("', '")}')`)
                     .execute()
 
                   const userRepository = getRepository(User)
                   await userRepository.remove(props.user)
 
-                  props.addToMessageUpdateList('null')
-
                   navigation.goBack()
+                  props.addToMessageUpdateList('null')
                 }}
               >
                 <Text style={{ ...styles.optionText, color: 'red' }}>

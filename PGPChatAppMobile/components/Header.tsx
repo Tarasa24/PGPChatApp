@@ -12,9 +12,10 @@ import { useTheme } from './ThemeContext'
 
 interface Props {
   title: String
+  goBackButton?: boolean
 }
 
-export default function Header({ title }: Props) {
+export default function Header({ title, goBackButton = true }: Props) {
   const navigation = useNavigation()
   const theme = useTheme()
 
@@ -28,13 +29,15 @@ export default function Header({ title }: Props) {
         },
       }}
     >
-      <TouchableOpacity
-        onPress={() => navigation.goBack()}
-        style={styles.icon}
-        activeOpacity={0.7}
-      >
-        <Icon name="arrow-back" size={25} color="white" />
-      </TouchableOpacity>
+      {goBackButton && (
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.icon}
+          activeOpacity={0.7}
+        >
+          <Icon name="arrow-back" size={25} color="white" />
+        </TouchableOpacity>
+      )}
       <View
         style={{
           flexDirection: 'row',
@@ -64,7 +67,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: Platform.OS == 'ios' ? 20 : 0,
     justifyContent: 'center',
-    borderBottomWidth: 1,
     backgroundColor: 'white',
+    height: 58,
   },
 })

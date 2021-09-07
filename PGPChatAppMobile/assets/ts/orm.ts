@@ -7,6 +7,7 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryColumn,
   PrimaryGeneratedColumn,
@@ -15,10 +16,15 @@ import {
 @Entity()
 export class File {
   @PrimaryGeneratedColumn('uuid') id: string
-  @Column('text') name: string
+  @Column('text', { nullable: true })
+  linkUri: string
   @Column('text') mime: MimeType
-  @Column('integer') size: number
-  @Column('text') b64: string
+  @Column('text') uri: string
+  @Column('text') name: string
+  @Column('boolean', { nullable: true })
+  renderable: boolean
+  @ManyToOne(() => Message, (message) => message.files, { nullable: true })
+  parentMessage: Message
 }
 
 @Entity()
@@ -37,6 +43,7 @@ export enum MessageStatus {
   sent,
   recieved,
   read,
+  deleted,
 }
 
 @Entity()
@@ -52,9 +59,9 @@ export class Message {
   @ManyToOne(() => User, { eager: true })
   @JoinColumn()
   recipient: User
-  @OneToOne(() => File, { nullable: true, cascade: true, eager: true })
+  @OneToMany(() => File, (file) => file.parentMessage)
   @JoinColumn()
-  file: File
+  files: File[]
   @Column('text') text: string
   @Column('integer', { default: MessageStatus.sending })
   status: MessageStatus
@@ -66,6 +73,18 @@ export interface MessageRaw {
   text: string
   author: string
   status: MessageStatus
+  files: File[]
+}
+
+export interface sendMessageContent {
+  text?: string
+  files?: {
+    linkUri?: string
+    base64?: string
+    name: string
+    mime: MimeType
+    renderable: boolean
+  }[]
 }
 
 let connExists = false
@@ -77,8 +96,8 @@ export function connect() {
       database: 'db',
       location: 'default',
       logging: ['error'],
-      synchronize: true,
       entities: [File, User, Message],
+      migrations: [],
     })
   } else return new Promise(() => {})
 }

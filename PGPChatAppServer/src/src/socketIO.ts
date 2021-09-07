@@ -1,7 +1,6 @@
 import { Server, Socket } from 'socket.io'
-import openpgp from 'openpgp'
-import crypto from 'crypto'
 import {
+  CallPayload,
   LoginPayload,
   MessageUpdatePayload,
   SendPayload,
@@ -11,25 +10,49 @@ import {
   UserSocket,
 } from './types'
 import {
-  KeyServerEntry,
-  KeyServerEntryType,
   MessagesQueue,
   MessagesQueueType,
   MessageUpdateQueue,
+  OngoingCalls,
+  OngoingCallsType,
 } from './models.js'
+import { verifyNonceSignature } from './helperFunctions.js'
+import { sendNotification } from './firebase.js'
+import Sequelize from 'sequelize'
+import chalk from 'chalk'
 
-let userSocketMap: UserSocket = {}
-let socketUserMap: SocketUser = {}
+/**
+  * Map storing userID as key and socketID as its value
+  * @returns socketID
+*/
+export let userSocketMap: UserSocket = {}
+/**
+  * Map storing socketID as key and userID as its value
+  * @returns userID
+*/
+export let socketUserMap: SocketUser = {}
 
 function addUser(userID: UserID, socketID: SocketID) {
   userSocketMap[userID] = socketID
   socketUserMap[socketID] = userID
+
+  console.log(
+    `Connection to the user ${chalk.bold.whiteBright(userID)} ${chalk.grey(
+      `(${socketID})`
+    )} has been ${chalk.bold.green('established')}`
+  )
 }
 function removeUser(socketID: SocketID) {
   const userID: UserID = socketUserMap[socketID]
 
   delete userSocketMap[userID]
   delete socketUserMap[socketID]
+
+  console.log(
+    `Connection to the user ${chalk.bold.whiteBright(userID)} ${chalk.grey(
+      `(${socketID})`
+    )} has ${chalk.bold.blue('faded')}`
+  )
 }
 
 /**
@@ -56,26 +79,8 @@ export default function(io: Server) {
         if (!data.userID || !data.signature) throw 'Invalid payload'
 
         // Verify the signature
-        const userModel = await KeyServerEntry.findOne({
-          where: { id: data.userID },
-        })
-        if (userModel === null) throw "UserID dosen't exist"
-        const { nonce, publicKey } = userModel.toJSON() as KeyServerEntryType
-
-        const verifyResult = await openpgp.verify({
-          message: await openpgp.Message.fromText(nonce.toString()),
-          signature: await openpgp.readSignature({
-            armoredSignature: data.signature,
-          }),
-          publicKeys: await openpgp.readKey({ armoredKey: publicKey }),
-        })
-        if (!verifyResult.signatures[0].verified) throw 'Invalid signature'
-
-        // Generate new nonce
-        await KeyServerEntry.update(
-          { nonce: crypto.randomBytes(4).readUInt32BE(0) },
-          { where: { id: data.userID } }
-        )
+        if (!await verifyNonceSignature(data.userID, data.signature))
+          throw 'Invalid signature'
 
         // Add user to in-memory dictionary of userIDs and socketIDs (this works only with single instance of server)
         addUser(data.userID, socket.id)
@@ -89,7 +94,7 @@ export default function(io: Server) {
           const msg = message.toJSON() as MessagesQueueType
           io.to(userSocketMap[data.userID]).emit('recieve', {
             id: msg.id,
-            timestamp: msg.timestamp,
+            timestamp: Number(new Date(msg.timestamp)),
             message: {
               content: msg.message_content,
               signature: msg.message_signature,
@@ -105,9 +110,28 @@ export default function(io: Server) {
         })
 
         for (const update of updates) {
-          io
-            .to(userSocketMap[data.userID])
-            .emit('messageUpdate', update.toJSON() as MessageUpdatePayload)
+          const up = update.toJSON() as MessageUpdatePayload
+          up.timestamp = Number(new Date(up.timestamp))
+          io.to(userSocketMap[data.userID]).emit('messageUpdate', up)
+        }
+
+        // TODO: Ingest ongoing calls
+        const call = (await OngoingCalls.findOne({
+          where: {
+            [Sequelize.Op.or]: [
+              { caller: socketUserMap[socket.id] },
+              { callee: socketUserMap[socket.id] },
+            ],
+          },
+        })) as OngoingCallsType | null
+
+        if (call !== null) {
+          socket.emit('call', {
+            caller: call.caller,
+            callerPeerToken: call.callerPeerToken,
+            callee: call.callee,
+            calleePeerToken: call.calleePeerToken,
+          } as CallPayload)
         }
       } catch (error) {
         console.error(error)
@@ -173,6 +197,9 @@ export default function(io: Server) {
           messageId: data.id,
           to: data.from,
         } as MessageUpdatePayload)
+
+        //Send notification
+        await sendNotification(data.to)
       } catch (error) {
         console.error(error)
       }
@@ -183,12 +210,26 @@ export default function(io: Server) {
       try {
         checkLogin(socket)
 
+        // Check if the message set to be deleted is still in the queue. If so, it deletes it and sends only the update
+        if (data.action === 'DELETE') {
+          await MessagesQueue.destroy({
+            where: {
+              id: data.messageId,
+            },
+          })
+          // Resend notification with updated queue length
+          await sendNotification(data.to)
+        }
+
+        const now = Date.now()
+
         if (userSocketMap[data.to])
           io.to(userSocketMap[data.to]).emit('messageUpdate', {
             action: data.action,
             messageId: data.messageId,
             to: data.to,
             from: socketUserMap[socket.id],
+            timestamp: now,
           } as MessageUpdatePayload)
 
         await MessageUpdateQueue.create({
@@ -196,6 +237,7 @@ export default function(io: Server) {
           messageId: data.messageId,
           to: data.to,
           from: socketUserMap[socket.id],
+          timestamp: now,
         } as MessageUpdatePayload)
       } catch (error) {
         console.error(error)
@@ -219,7 +261,65 @@ export default function(io: Server) {
       }
     })
 
-    socket.on('disconnect', () => {
+    socket.on('call', async (data: CallPayload) => {
+      try {
+        checkLogin(socket)
+
+        if (![data.caller, data.callee].includes(socketUserMap[socket.id]))
+          return
+
+        await OngoingCalls.create({
+          caller: data.caller,
+          callerPeerToken: data.callerPeerToken,
+          callee: data.callee,
+          calleePeerToken: data.calleePeerToken,
+        } as OngoingCallsType)
+        await sendNotification(data.callee, {
+          COMMAND: 'INCOMING_CALL',
+          PAYLOAD: { caller: data.caller, callee: data.callee },
+        })
+
+        socket.emit('call', {
+          caller: data.caller,
+          callerPeerToken: data.callerPeerToken,
+          callee: data.callee,
+          calleePeerToken: data.calleePeerToken,
+        } as CallPayload)
+      } catch (error) {
+        console.error(error)
+      }
+    })
+
+    socket.on('endCall', async (data: CallPayload) => {
+      try {
+        checkLogin(socket)
+
+        if (![data.caller, data.callee].includes(socketUserMap[socket.id]))
+          return
+
+        await OngoingCalls.destroy({
+          where: { caller: data.caller, callee: data.callee },
+        })
+
+        await sendNotification(data.callee, {
+          COMMAND: 'DISMISS_CALL',
+          PAYLOAD: { caller: data.caller, callee: data.callee },
+        })
+      } catch (error) {
+        console.error(error)
+      }
+    })
+
+    socket.on('disconnect', async () => {
+      await OngoingCalls.destroy({
+        where: {
+          [Sequelize.Op.or]: [
+            { caller: socketUserMap[socket.id] },
+            { callee: socketUserMap[socket.id] },
+          ],
+        },
+      })
+
       removeUser(socket.id)
     })
   })

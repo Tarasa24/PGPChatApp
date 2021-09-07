@@ -18,12 +18,13 @@ import Icon from 'react-native-ionicons'
 import { connect } from 'react-redux'
 import { getRepository, Not } from 'typeorm'
 import { lightenDarkenColor } from '../assets/ts/lightenDarkenColor'
-import { Message, MessageStatus, User } from '../assets/ts/orm'
+import { File, Message, MessageStatus, User } from '../assets/ts/orm'
 import Avatar from '../components/Avatar'
 import ChatsHeader from '../components/ChatsHeader'
 import { useTheme } from '../components/ThemeContext'
 import { LocalUserState } from '../store/reducers/localUserReducer'
 import * as Chat from './Chat'
+import Time from '../components/Time'
 
 interface Props {
   localUser: LocalUserState
@@ -33,11 +34,6 @@ interface Props {
 function Chats(props: Props) {
   const navigation = useNavigation()
   const theme = useTheme()
-
-  const locale =
-    Platform.OS === 'ios'
-      ? NativeModules.SettingsManager.settings.AppleLocale
-      : NativeModules.I18nManager.localeIdentifier
 
   enum Stage {
     Loading,
@@ -62,6 +58,7 @@ function Chats(props: Props) {
       async function prepareChats() {
         const userRepository = getRepository(User)
         const messageRepository = getRepository(Message)
+        const fileRepository = getRepository(File)
 
         const self = await userRepository.findOneOrFail({
           id: props.localUser.id,
@@ -78,13 +75,20 @@ function Chats(props: Props) {
               {
                 recipient: self,
                 author: user,
+                status: Not(MessageStatus.deleted),
               },
               {
                 recipient: user,
                 author: self,
+                status: Not(MessageStatus.deleted),
               },
             ],
             order: { timestamp: 'DESC' },
+          })
+
+          lastMessage.files = await fileRepository.find({
+            where: { parentMessage: lastMessage.id },
+            select: ['name'],
           })
 
           others.push({
@@ -92,6 +96,10 @@ function Chats(props: Props) {
             lastMessage: lastMessage ? lastMessage : null,
           })
         }
+
+        others.sort((a, b) => {
+          return b.lastMessage.timestamp - a.lastMessage.timestamp
+        })
         setUsers({ self: self, others: others })
       }
 
@@ -121,6 +129,23 @@ function Chats(props: Props) {
   }
 
   function getChats() {
+    function messageText(msg: Message) {
+      if (msg.files && msg.files.length > 0) {
+        let out =
+          msg.files.length === 1
+            ? '📎 ' + msg.text
+            : msg.files.length + '📎 ' + msg.text
+        if (msg.text === '')
+          out += msg.files
+            .map((f) => {
+              return f.name
+            })
+            .join(' ')
+
+        return out
+      } else return msg.text
+    }
+
     function highlightNewMessage(msg: Message) {
       if (msg) {
         if (
@@ -134,13 +159,13 @@ function Chats(props: Props) {
               }}
               numberOfLines={1}
             >
-              {msg.text}
+              {messageText(msg)}
             </Text>
           )
         else {
           return (
             <Text style={{ color: 'grey' }} numberOfLines={1}>
-              {msg.text}
+              {messageText(msg)}
             </Text>
           )
         }
@@ -205,19 +230,14 @@ function Chats(props: Props) {
                   {highlightNewMessage(other.lastMessage)}
                 </View>
                 <View style={styles.status}>
-                  <Text style={{ color: theme.colors.text }}>
-                    {other.lastMessage ? (
-                      new Date(other.lastMessage.timestamp).toLocaleTimeString(
-                        locale
-                      )
-                    ) : (
-                      ' '
-                    )}
-                  </Text>
-                  {other.lastMessage &&
-                  other.lastMessage.author.id !== other.user.id ? (
-                    statusIcon(other.lastMessage)
-                  ) : null}
+                  {other.lastMessage && (
+                    <Time
+                      timestamp={other.lastMessage.timestamp}
+                      style={{ color: theme.colors.text }}
+                    />
+                  )}
+
+                  {other.lastMessage ? statusIcon(other.lastMessage) : null}
                 </View>
               </View>
             </TouchableOpacity>

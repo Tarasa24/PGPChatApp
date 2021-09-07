@@ -21,14 +21,14 @@ export const MessagesQueue = sequelize.define(
   'MessagesQueue',
   {
     id: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(36),
       primaryKey: true,
     },
     timestamp: DataTypes.DATE,
-    message_content: DataTypes.STRING,
-    message_signature: DataTypes.STRING,
-    to: DataTypes.STRING,
-    from: DataTypes.STRING,
+    message_content: DataTypes.TEXT,
+    message_signature: DataTypes.TEXT,
+    to: DataTypes.STRING(28),
+    from: DataTypes.STRING(28),
   },
   {
     freezeTableName: true,
@@ -45,27 +45,64 @@ export type MessagesQueueType = {
 
 export const KeyServerEntry = sequelize.define('KeyServerEntry', {
   id: {
-    type: DataTypes.STRING,
+    type: DataTypes.STRING(28),
     primaryKey: true,
   },
-  publicKey: DataTypes.STRING,
+  publicKey: DataTypes.TEXT,
   nonce: DataTypes.INTEGER,
+  notificationToken: DataTypes.STRING,
 })
 
 export type KeyServerEntryType = {
   id: string
   publicKey: string
   nonce: number
+  notificationToken: string
 }
 
 export const MessageUpdateQueue = sequelize.define(
   'MessageUpdateQueue',
   {
-    messageId: DataTypes.STRING,
+    messageId: DataTypes.STRING(36),
     action: DataTypes.STRING,
-    to: DataTypes.STRING,
+    to: DataTypes.STRING(28),
+    from: DataTypes.STRING(28),
+    timestamp: DataTypes.DATE,
   },
   {
     freezeTableName: true,
+    updatedAt: false,
+    createdAt: false,
   }
 )
+
+export const OngoingCalls = sequelize.define(
+  'OngoingCalls',
+  {
+    caller: {
+      type: DataTypes.STRING(28),
+      unique: true,
+    },
+    callerPeerToken: DataTypes.STRING(36),
+    callee: {
+      type: DataTypes.STRING(28),
+      unique: true,
+    },
+    calleePeerToken: DataTypes.STRING(36),
+  },
+  {
+    freezeTableName: true,
+    updatedAt: false,
+  }
+)
+
+export type OngoingCallsType = {
+  id: number
+
+  caller: string
+  callerPeerToken: string
+  callee: string
+  calleePeerToken: string
+
+  createdAt: Date
+}
