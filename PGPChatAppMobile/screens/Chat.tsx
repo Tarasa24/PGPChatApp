@@ -30,16 +30,13 @@ import ChatBubble from '../components/ChatBubble'
 import { getRepository } from 'typeorm'
 import { LocalUserState } from '../store/reducers/localUserReducer'
 import { connect } from 'react-redux'
-import {
-  socket,
-  SendPayload,
-  MessageUpdatePayload,
-} from '../assets/ts/socketio'
+import { socket, SendPayload, MessageUpdatePayload } from '../assets/ts/socketio'
 import OpenPGP from 'react-native-fast-openpgp'
 import * as messageUpdatesListReducer from '../store/reducers/messageUpdatesListReducer'
 import * as RNFS from 'react-native-fs'
 import DocumentPicker, { MimeType } from 'react-native-document-picker'
 import Video from 'react-native-video'
+import RNFetchBlob from 'rn-fetch-blob'
 
 export interface RouteParams {
   participants: {
@@ -88,14 +85,10 @@ function Chat(props: Props) {
     const messages = await messageRepository
       .createQueryBuilder()
       .where(
-        `(message.recipientId = '${props.route.params.participants.self
-          .id}' AND message.authorId = '${props.route.params.participants.other
-          .id}')`
+        `(message.recipientId = '${props.route.params.participants.self.id}' AND message.authorId = '${props.route.params.participants.other.id}')`
       )
       .orWhere(
-        `(message.recipientId = '${props.route.params.participants.other
-          .id}' AND message.authorId = '${props.route.params.participants.self
-          .id}')`
+        `(message.recipientId = '${props.route.params.participants.other.id}' AND message.authorId = '${props.route.params.participants.self.id}')`
       )
       .select(['id', 'timestamp', 'text', 'authorId AS author', 'status'])
       .orderBy('timestamp', 'DESC')
@@ -132,14 +125,10 @@ function Chat(props: Props) {
         to: props.route.params.participants.other.id,
       } as MessageUpdatePayload)
 
-      await messageRepository.update(
-        { id: message.id },
-        { status: MessageStatus.read }
-      )
+      await messageRepository.update({ id: message.id }, { status: MessageStatus.read })
     }
 
-    if (unread.length > 0)
-      props.addToMessageUpdateList(unread.map((msg) => msg.id))
+    if (unread.length > 0) props.addToMessageUpdateList(unread.map((msg) => msg.id))
   }
 
   useEffect(() => {
@@ -148,50 +137,35 @@ function Chat(props: Props) {
     })
   }, [])
 
-  useEffect(
-    () => {
-      const keyboardDidShowListener = Keyboard.addListener(
-        'keyboardDidShow',
-        () => {
-          setAddFileMenuOpened(false)
-          if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: false })
-        }
-      )
-      return () => {
-        keyboardDidShowListener.remove()
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      setAddFileMenuOpened(false)
+      if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: false })
+    })
+    return () => {
+      keyboardDidShowListener.remove()
+    }
+  }, [scrollViewRef])
+
+  useEffect(() => {
+    loadMessages().then(() => {
+      sendReadStatus()
+    })
+  }, [props.messageUpdatesList])
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', function () {
+      if (addFileMenuOpened) {
+        setAddFileMenuOpened(false)
+        return true
+      } else {
+        navigation.goBack()
+        return true
       }
-    },
-    [scrollViewRef]
-  )
+    })
 
-  useEffect(
-    () => {
-      loadMessages().then(() => {
-        sendReadStatus()
-      })
-    },
-    [props.messageUpdatesList]
-  )
-
-  useEffect(
-    () => {
-      const backHandler = BackHandler.addEventListener(
-        'hardwareBackPress',
-        function() {
-          if (addFileMenuOpened) {
-            setAddFileMenuOpened(false)
-            return true
-          } else {
-            navigation.goBack()
-            return true
-          }
-        }
-      )
-
-      return () => backHandler.remove()
-    },
-    [addFileMenuOpened]
-  )
+    return () => backHandler.remove()
+  }, [addFileMenuOpened])
 
   async function sendMessage() {
     if (!inputRef.current) return
@@ -221,15 +195,33 @@ function Chat(props: Props) {
           inlineFile.b64 !== null
             ? inlineFile.b64
             : await RNFS.readFile(inlineFile.uri, 'base64')
+        let uri = `${RNFS.ExternalStorageDirectoryPath}/PGPChatApp/${Date.now()}-${
+          inlineFile.name
+        }`
 
-        newFile.uri = `${RNFS.ExternalStorageDirectoryPath}/PGPChatApp/${Date.now()}-${inlineFile.name}`
+        // Save file
+        await RNFS.mkdir(RNFS.ExternalStorageDirectoryPath + '/PGPChatApp')
+        await RNFS.writeFile(uri, base64, 'base64')
+
+        // Caluclate hash
+        const hash = await RNFetchBlob.fs.hash(uri, 'sha256')
+
+        // Check if the file already exists
+        const hashedFiles = await fileRepository.find({
+          where: { hash: hash },
+        })
+
+        // Unlink if it does, and replace the new uri with the one that already exists
+        if (hashedFiles.length >= 1) {
+          await RNFS.unlink(uri)
+          uri = hashedFiles[0].uri
+        } else newFile.hash = hash
+
+        newFile.uri = uri
         newFile.mime = inlineFile.mime
         newFile.parentMessage = message
         newFile.name = inlineFile.name
         newFile.renderable = inlineFile.b64 !== null
-
-        await RNFS.mkdir(RNFS.ExternalStorageDirectoryPath + '/PGPChatApp')
-        await RNFS.writeFile(newFile.uri, base64, 'base64')
 
         await fileRepository.save(newFile)
 
@@ -359,10 +351,7 @@ function Chat(props: Props) {
             new Date(messages[i + 1].timestamp).toDateString()
         ) {
           out.push(
-            <Text
-              style={{ textAlign: 'center', color: 'gray', marginTop: 5 }}
-              key={i}
-            >
+            <Text style={{ textAlign: 'center', color: 'gray', marginTop: 5 }} key={i}>
               {new Date(messages[i + 1].timestamp).toLocaleDateString(locale)}
             </Text>
           )
@@ -385,8 +374,7 @@ function Chat(props: Props) {
             setScrollViewRef(ref)
           }}
           onContentSizeChange={() => {
-            if (shouldScrollDown())
-              scrollViewRef.scrollToEnd({ animated: false })
+            if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: false })
           }}
         >
           <View
@@ -413,12 +401,9 @@ function Chat(props: Props) {
 
   const [inlineFiles, setInlineFiles] = useState([] as InlineFile[])
 
-  useEffect(
-    () => {
-      if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: false })
-    },
-    [inlineFiles, addFileMenuOpened]
-  )
+  useEffect(() => {
+    if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: false })
+  }, [inlineFiles, addFileMenuOpened])
 
   function showInlineFiles() {
     function evalFile(file: InlineFile) {
@@ -433,10 +418,7 @@ function Chat(props: Props) {
             }}
           >
             <Icon name="document" size={32} color={theme.colors.text} />
-            <Text
-              style={{ color: theme.colors.text, fontSize: 10 }}
-              numberOfLines={1}
-            >
+            <Text style={{ color: theme.colors.text, fontSize: 10 }} numberOfLines={1}>
               {file.name}
             </Text>
           </View>
@@ -590,9 +572,7 @@ function Chat(props: Props) {
               ])
             }}
           />
-          <View style={{ flexGrow: 1, alignItems: 'center' }}>
-            {sendAddButton()}
-          </View>
+          <View style={{ flexGrow: 1, alignItems: 'center' }}>{sendAddButton()}</View>
         </View>
       </View>
 
@@ -605,10 +585,7 @@ function Chat(props: Props) {
                 onPress={async () => {
                   try {
                     const res = await DocumentPicker.pickMultiple({
-                      type: [
-                        DocumentPicker.types.images,
-                        DocumentPicker.types.video,
-                      ],
+                      type: [DocumentPicker.types.images, DocumentPicker.types.video],
                     })
 
                     const out = [] as InlineFile[]
