@@ -57,7 +57,8 @@ function AddUser(props: Props) {
       const user = new User()
       user.id = fetchedUser.id
       user.publicKey = fetchedUser.publicKey
-      await userRepository.insert(user)
+      if ((await userRepository.count({ where: { id: fetchedUser.id } })) === 0)
+        await userRepository.insert(user)
 
       // Navigate to the newly created
       navigation.reset({
@@ -105,11 +106,7 @@ function AddUser(props: Props) {
           ref={inputRef}
           onChangeText={(change) => setInputState(change)}
         />
-        <Button
-          onPress={() => addUser()}
-          title="Add"
-          color={theme.colors.primary}
-        />
+        <Button onPress={() => addUser()} title="Add" color={theme.colors.primary} />
       </View>
       <Toast ref={(ref) => Toast.setRef(ref)} style={{ zIndex: 2 }} />
     </View>
