@@ -12,6 +12,7 @@ import {
   PrimaryColumn,
   PrimaryGeneratedColumn,
 } from 'typeorm'
+import AddedHashToFiles1633013397001 from '../migrations/AddedHashToFiles1633013397001'
 
 @Entity()
 export class File {
@@ -21,6 +22,11 @@ export class File {
   @Column('text') mime: MimeType
   @Column('text') uri: string
   @Column('text') name: string
+  @Column('text', {
+    nullable: true,
+    unique: true,
+  })
+  hash: string
   @Column('boolean', { nullable: true })
   renderable: boolean
   @ManyToOne(() => Message, (message) => message.files, { nullable: true })
@@ -97,7 +103,7 @@ export function connect() {
       location: 'default',
       logging: ['error'],
       entities: [File, User, Message],
-      migrations: [],
+      migrations: [AddedHashToFiles1633013397001],
     })
   } else return new Promise(() => {})
 }
