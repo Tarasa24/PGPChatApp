@@ -311,14 +311,15 @@ export default function(io: Server) {
     })
 
     socket.on('disconnect', async () => {
-      await OngoingCalls.destroy({
-        where: {
-          [Sequelize.Op.or]: [
-            { caller: socketUserMap[socket.id] },
-            { callee: socketUserMap[socket.id] },
-          ],
-        },
-      })
+      if (socketUserMap[socket.id])
+        await OngoingCalls.destroy({
+          where: {
+            [Sequelize.Op.or]: [
+              { caller: socketUserMap[socket.id] },
+              { callee: socketUserMap[socket.id] },
+            ],
+          },
+        })
 
       removeUser(socket.id)
     })
