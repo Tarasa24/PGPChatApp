@@ -1,11 +1,12 @@
 {
   "name": "PGPChatApp",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
-    "start": "react-native start"
+    "start": "react-native start",
+    "postversion": "react-native-version --never-amend"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.13.4",
@@ -77,6 +78,7 @@
     "eslint-plugin-unused-imports": "^1.0.1",
     "jest": "^25.1.0",
     "metro-react-native-babel-preset": "^0.59.0",
+    "react-native-version": "^4.0.0",
     "react-test-renderer": "16.13.1",
     "redux-logger": "^3.0.6",
     "typescript": "^3.8.3"
