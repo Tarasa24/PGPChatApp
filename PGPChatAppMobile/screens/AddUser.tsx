@@ -8,6 +8,8 @@ import { fetchRest } from '../assets/ts/api'
 import { User } from '../assets/ts/orm'
 import { useTheme } from '../components/ThemeContext'
 import { LocalUserState } from '../store/reducers/localUserReducer'
+import Waves from '../components/svg/Waves'
+import WavesDark from '../components/svg/Waves-dark'
 
 interface Props {
   localUser: LocalUserState
@@ -93,6 +95,7 @@ function AddUser(props: Props) {
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
+      {!theme.dark ? <Waves style={styles.waves} /> : <WavesDark style={styles.waves} />}
       <View
         style={{
           minHeight: '100%',
@@ -130,5 +133,13 @@ const styles = StyleSheet.create({
     borderColor: '#dadada',
     borderWidth: 1,
     borderRadius: 15,
+  },
+  waves: {
+    zIndex: 1,
+    transform: [{ scale: 0.65 }],
+    position: 'absolute',
+    left: -500,
+    top: -85,
+    marginBottom: -80,
   },
 })
