@@ -1,5 +1,5 @@
 import React from 'react'
-import { StyleSheet, Switch, Text, TextInput, View } from 'react-native'
+import { Alert, Button, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler'
 import { connect } from 'react-redux'
 import { lightenDarkenColor } from '../assets/ts/lightenDarkenColor'
@@ -9,7 +9,6 @@ import Icon from 'react-native-ionicons'
 import Toast from 'react-native-toast-message'
 import DocumentPicker, { MimeType } from 'react-native-document-picker'
 import { File, User } from '../assets/ts/orm'
-import randomWords from 'random-words'
 
 import * as RNFS from 'react-native-fs'
 import { getConnection, getRepository } from 'typeorm'
@@ -63,11 +62,7 @@ export function Profile(props: Props) {
     picture.uri = `${RNFS.ExternalStorageDirectoryPath}/PGPChatApp/${Date.now()}-${name}`
 
     await RNFS.mkdir(RNFS.ExternalStorageDirectoryPath + '/PGPChatApp')
-    await RNFS.writeFile(
-      picture.uri,
-      await RNFS.readFile(uri, 'base64'),
-      'base64'
-    )
+    await RNFS.writeFile(picture.uri, await RNFS.readFile(uri, 'base64'), 'base64')
 
     localUser.picture = await fileRepository.save(picture)
 
@@ -109,7 +104,8 @@ export function Profile(props: Props) {
                 .then((localUser) => {
                   props.dropAvatar(localUser.id)
                   removeImageFromUser(localUser)
-                })}
+                })
+            }
           >
             <View
               style={{
@@ -128,6 +124,16 @@ export function Profile(props: Props) {
       )
   }
 
+  async function exportPrivateKey() {
+    const uri = `${RNFS.ExternalStorageDirectoryPath}/PGPChatApp/${props.localUser.id}.asc`
+
+    await RNFS.mkdir(RNFS.ExternalStorageDirectoryPath + '/PGPChatApp')
+
+    await RNFS.writeFile(uri, props.localUser.privateKey, 'utf8')
+
+    return uri
+  }
+
   return (
     <View style={{ height: '100%', backgroundColor: theme.colors.background }}>
       <Toast ref={(ref) => Toast.setRef(ref)} style={{ zIndex: 9 }} />
@@ -138,28 +144,13 @@ export function Profile(props: Props) {
             alignItems: 'center',
           }}
         >
-          <View
-            style={{ marginBottom: 2.5, position: 'relative', padding: 7.5 }}
-          >
+          <View style={{ marginBottom: 2.5, position: 'relative', padding: 7.5 }}>
             <TouchableOpacity activeOpacity={0.7} onPress={selectImage}>
               <Avatar userID={props.localUser.id} size={100} />
             </TouchableOpacity>
             {clearAvatarButton()}
           </View>
 
-          <TextInput
-            style={{ color: theme.colors.text, fontSize: 24, marginBottom: 5 }}
-            maxLength={32}
-            multiline={false}
-            onChangeText={(text) => console.log(text)}
-            placeholder={randomWords({
-              exactly: 1,
-              wordsPerString: 3,
-              separator: '-',
-              join: '',
-            })}
-            placeholderTextColor="gray"
-          />
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() => {
@@ -172,7 +163,7 @@ export function Profile(props: Props) {
               Clipboard.setString(props.localUser.id)
             }}
           >
-            <Text style={{ color: theme.colors.text }}>
+            <Text style={{ color: theme.colors.text, fontSize: 21 }}>
               {props.localUser.id}
             </Text>
           </TouchableOpacity>
@@ -210,6 +201,45 @@ export function Profile(props: Props) {
               thumbColor={theme.colors.primary}
               onValueChange={handleDarkMode}
               value={theme.dark}
+            />
+          </View>
+
+          <View
+            style={{
+              marginTop: 30,
+              alignSelf: 'center',
+              width: '60%',
+            }}
+          >
+            <Button
+              onPress={() => {
+                Alert.alert(
+                  'Are you sure you want to proceed?',
+                  'Exporting the private key will make it accessible to any application given enough permission, which will inevitably lower the overal security. The only time you should be exporting the private key is to switch devices.',
+                  [
+                    {
+                      text: 'Abort',
+                      style: 'cancel',
+                    },
+                    {
+                      text: 'Proceed',
+                      onPress: () => {
+                        exportPrivateKey().then((uri) => {
+                          Toast.show({
+                            type: 'success',
+                            position: 'bottom',
+                            text1: 'Private Key has been successfully exported',
+                            text2: uri,
+                            visibilityTime: 5000,
+                          })
+                        })
+                      },
+                    },
+                  ]
+                )
+              }}
+              title="Export private key"
+              color={theme.colors.primary}
             />
           </View>
         </View>

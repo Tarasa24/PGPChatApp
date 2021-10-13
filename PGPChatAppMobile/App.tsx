@@ -29,6 +29,7 @@ import Gallery from './screens/Gallery'
 import PreviewFile from './screens/PreviewFile'
 import PushNotification from 'react-native-push-notification'
 import { navigationRef } from './assets/ts/navigation'
+import ImportPK from './screens/ImportPK'
 
 // Globals
 global.Buffer = global.Buffer || require('buffer').Buffer
@@ -96,6 +97,13 @@ export default function App() {
                             header: () => <Header title="Generate Account" />,
                           }}
                         />
+                        <Stack.Screen
+                          name="ImportPK"
+                          component={ImportPK}
+                          options={{
+                            header: () => <Header title="Import Private Key" />,
+                          }}
+                        />
 
                         <Stack.Screen name="Chats" component={Chats} />
                         <Stack.Screen
@@ -127,9 +135,7 @@ export default function App() {
                           name="Call"
                           component={Call}
                           options={{
-                            header: () => (
-                              <Header title="Call" goBackButton={false} />
-                            ),
+                            header: () => <Header title="Call" goBackButton={false} />,
                           }}
                         />
                       </StackNavigator>
