@@ -37,6 +37,7 @@ import * as RNFS from 'react-native-fs'
 import DocumentPicker, { MimeType } from 'react-native-document-picker'
 import Video from 'react-native-video'
 import RNFetchBlob from 'rn-fetch-blob'
+import * as Compressor from 'react-native-compressor'
 import * as pickedGifReducer from '../store/reducers/pickedGifReducer'
 
 export interface RouteParams {
@@ -433,7 +434,7 @@ function Chat(props: Props) {
             </Text>
           </View>
         )
-      else if (file.mime.includes('.mp4'))
+      else if (file.mime.includes('mp4'))
         return (
           <Video
             source={{ uri: file.uri }}
@@ -532,6 +533,17 @@ function Chat(props: Props) {
         }}
       >
         <ScrollView horizontal={true}>{showInlineFiles()}</ScrollView>
+        {inlineFiles.length > 0 && (
+          <Text style={{color: theme.colors.text}}>
+            Space used:{' '}
+            {(
+              inlineFiles
+                .map((e) => Buffer.from(e.b64).length)
+                .reduce((p, c) => p + c) / 1e6
+            ).toFixed(2)}{' '}
+            / 16 MB
+          </Text>
+        )}
         <View
           style={{
             flexDirection: 'row',
@@ -599,13 +611,56 @@ function Chat(props: Props) {
                     })
 
                     const out = [] as InlineFile[]
+                    let combinedSize = 0
                     for (let i = 0; i < res.length; i++) {
                       const file = res[i]
+
+                      let compressed_b64
+                      if (
+                        file.type.includes('image') &&
+                        !file.type.includes('gif')
+                      )
+                        compressed_b64 = await Compressor.Image.compress(
+                          await RNFS.readFile(file.uri, 'base64'),
+                          {
+                            input: 'base64',
+                            compressionMethod: 'manual',
+                            maxWidth: 1000,
+                            maxHeight: 1000,
+                            quality: 0.4,
+                            output: 'jpg',
+                            returnableOutputType: 'base64',
+                          },
+                        )
+                      else {
+                        if (file.size / 1e6 > 16) {
+                          Alert.alert(
+                            'Files have exceeded size of 16 MB',
+                            'Try sending files individually or compressing them.',
+                            [{text: 'ok', style: 'default'}],
+                          )
+                          setInlineFiles([])
+                          return
+                        }
+                        compressed_b64 = await RNFS.readFile(file.uri, 'base64')
+                      }
+
+                      combinedSize += Buffer.from(compressed_b64).length
+
+                      if (combinedSize / 1e6 > 16) {
+                        Alert.alert(
+                          'Files have exceeded size of 16 MB',
+                          'Try sending files individually or compressing them.',
+                          [{text: 'ok', style: 'default'}],
+                        )
+                        setInlineFiles([])
+                        return
+                      }
 
                       out.push({
                         uri: file.uri,
                         mime: file.type as MimeType,
-                        b64: await RNFS.readFile(file.uri, 'base64'),
+                        b64: compressed_b64,
                         name: file.name,
                         renderable: true,
                       })
