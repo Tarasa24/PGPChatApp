@@ -22,14 +22,14 @@ import Sequelize from 'sequelize'
 import chalk from 'chalk'
 
 /**
-  * Map storing userID as key and socketID as its value
-  * @returns socketID
-*/
+ * Map storing userID as key and socketID as its value
+ * @returns socketID
+ */
 export let userSocketMap: UserSocket = {}
 /**
-  * Map storing socketID as key and userID as its value
-  * @returns userID
-*/
+ * Map storing socketID as key and userID as its value
+ * @returns userID
+ */
 export let socketUserMap: SocketUser = {}
 
 function addUser(userID: UserID, socketID: SocketID) {
@@ -69,7 +69,7 @@ function checkLogin(socket: Socket) {
   } else return
 }
 
-export default function(io: Server) {
+export default function (io: Server) {
   io.on('connection', (socket: Socket) => {
     // Workaround for users not logging in upon connect or reconnect (I have no idea why it doesn't work)
     socket.emit('requestLogin', {})
@@ -169,9 +169,10 @@ export default function(io: Server) {
 
         // Emit payload to socket
         if (userSocketMap[data.to])
-          io
-            .to(userSocketMap[data.to])
-            .emit('recieve', { ...data, timestamp: now } as SendPayload)
+          io.to(userSocketMap[data.to]).emit('recieve', {
+            ...data,
+            timestamp: now,
+          } as SendPayload)
 
         // Add to queue in case the message wasn't recieved
         await MessagesQueue.create({
@@ -265,8 +266,7 @@ export default function(io: Server) {
       try {
         checkLogin(socket)
 
-        if (![data.caller, data.callee].includes(socketUserMap[socket.id]))
-          return
+        if (![data.caller, data.callee].includes(socketUserMap[socket.id])) return
 
         await OngoingCalls.create({
           caller: data.caller,
@@ -294,8 +294,7 @@ export default function(io: Server) {
       try {
         checkLogin(socket)
 
-        if (![data.caller, data.callee].includes(socketUserMap[socket.id]))
-          return
+        if (![data.caller, data.callee].includes(socketUserMap[socket.id])) return
 
         await OngoingCalls.destroy({
           where: { caller: data.caller, callee: data.callee },

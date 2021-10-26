@@ -4,9 +4,9 @@ import { Model } from 'sequelize/types'
 import { KeyServerEntry, KeyServerEntryType, MessagesQueue } from './models.js'
 
 admin.initializeApp({
-  credential: admin.credential.cert(JSON.parse(
-    await fs.readFile('firebase-secret.json', 'utf-8')
-  ) as admin.ServiceAccount),
+  credential: admin.credential.cert(
+    JSON.parse(await fs.readFile('firebase-secret.json', 'utf-8')) as admin.ServiceAccount
+  ),
 })
 
 type DismissCallPayload = IncomingCallPayload
@@ -19,10 +19,7 @@ export interface NotificationData {
   PAYLOAD: undefined | IncomingCallPayload | DismissCallPayload
 }
 
-export async function sendNotification(
-  to: string,
-  data: NotificationData | null = null
-) {
+export async function sendNotification(to: string, data: NotificationData | null = null) {
   const userModel = (await KeyServerEntry.findOne({
     where: { id: to },
   })) as Model<any, any>

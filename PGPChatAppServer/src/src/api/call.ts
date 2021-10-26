@@ -185,10 +185,7 @@ router.get('/:id', async (req: Request<{ id: string }, {}, {}>, res) => {
 
     const count = await OngoingCalls.count({
       where: {
-        [Sequelize.Op.or]: [
-          { caller: req.params.id },
-          { callee: req.params.id },
-        ],
+        [Sequelize.Op.or]: [{ caller: req.params.id }, { callee: req.params.id }],
       },
     })
 

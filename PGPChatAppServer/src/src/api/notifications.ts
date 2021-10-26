@@ -44,34 +44,31 @@ interface registerTokenBody {
  *       500:
  *         description: Returns json describing the error
  */
-router.put(
-  '/registerToken',
-  async (req: Request<{}, {}, registerTokenBody>, res) => {
-    try {
-      // Syntax check
-      if (!req.body.id || !req.body.signature || !req.body.signature) {
-        res.sendStatus(400)
-        return
-      }
-
-      //Validate signature
-      if (!await verifyNonceSignature(req.body.id, req.body.signature)) {
-        res.sendStatus(401)
-        return
-      }
-
-      await KeyServerEntry.update(
-        { notificationToken: req.body.token },
-        { where: { id: req.body.id } }
-      )
-
-      res.sendStatus(201)
-    } catch (error) {
-      console.error(error)
-
-      res.status(500).json(error)
+router.put('/registerToken', async (req: Request<{}, {}, registerTokenBody>, res) => {
+  try {
+    // Syntax check
+    if (!req.body.id || !req.body.signature || !req.body.signature) {
+      res.sendStatus(400)
+      return
     }
+
+    //Validate signature
+    if (!(await verifyNonceSignature(req.body.id, req.body.signature))) {
+      res.sendStatus(401)
+      return
+    }
+
+    await KeyServerEntry.update(
+      { notificationToken: req.body.token },
+      { where: { id: req.body.id } }
+    )
+
+    res.sendStatus(201)
+  } catch (error) {
+    console.error(error)
+
+    res.status(500).json(error)
   }
-)
+})
 
 export default router
