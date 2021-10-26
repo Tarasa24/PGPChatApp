@@ -37,6 +37,7 @@ import * as RNFS from 'react-native-fs'
 import DocumentPicker, { MimeType } from 'react-native-document-picker'
 import Video from 'react-native-video'
 import RNFetchBlob from 'rn-fetch-blob'
+import * as pickedGifReducer from '../store/reducers/pickedGifReducer'
 
 export interface RouteParams {
   participants: {
@@ -52,6 +53,17 @@ interface Props {
   localUser: LocalUserState
   messageUpdatesList: string[]
   addToMessageUpdateList: (messageId: string | string[]) => void
+  pickedGif: InlineFile
+  dropPickedGif: () => void
+}
+
+export interface InlineFile {
+  renderable: boolean
+  mime: MimeType
+  b64: string
+  linkUri?: string
+  uri: string
+  name: string
 }
 
 function Chat(props: Props) {
@@ -73,6 +85,13 @@ function Chat(props: Props) {
   const [inputState, setInputState] = useState('')
 
   const [addFileMenuOpened, setAddFileMenuOpened] = useState(false)
+
+  useEffect(() => {
+    if (Object.keys(props.pickedGif).length != 0) {
+      setInlineFiles([...inlineFiles, props.pickedGif])
+      props.dropPickedGif()
+    }
+  }, [props.pickedGif])
 
   function shouldScrollDown() {
     if (scrollViewRef) return true
@@ -390,15 +409,6 @@ function Chat(props: Props) {
       )
   }
 
-  interface InlineFile {
-    renderable: boolean
-    mime: MimeType
-    b64: string
-    linkUri?: string
-    uri: string
-    name: string
-  }
-
   const [inlineFiles, setInlineFiles] = useState([] as InlineFile[])
 
   useEffect(() => {
@@ -628,7 +638,9 @@ function Chat(props: Props) {
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity activeOpacity={0.7}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate('GifPicker')}>
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -767,6 +779,7 @@ const styles = StyleSheet.create({
 const mapStateToProps = (state: any) => ({
   localUser: state.localUserReducer,
   messageUpdatesList: state.messageUpdatesListReducer,
+  pickedGif: state.pickedGifReducer,
 })
 
 const mapDispatchToProps = (dispatch: any) => ({
@@ -775,6 +788,12 @@ const mapDispatchToProps = (dispatch: any) => ({
       type: 'ADD_TO_MESSAGE_UPDATES_LIST',
       payload: { messageID: messageId },
     } as messageUpdatesListReducer.Action)
+  },
+  dropPickedGif: () => {
+    dispatch({
+      type: 'DROP_PICKED_GIF',
+      payload: {},
+    } as pickedGifReducer.Action)
   },
 })
 

@@ -10,9 +10,9 @@ import {MenuProvider} from 'react-native-popup-menu'
 import DeviceInfo from 'react-native-device-info'
 
 // Import screens
-import VersionCheck from './screens/VersionCheck'
 import Chats from './screens/Chats'
 import Chat from './screens/Chat'
+import GifPicker from './screens/GifPicker'
 import AddUser from './screens/AddUser'
 import Profile from './screens/Profile'
 import Header from './components/Header'
@@ -156,6 +156,13 @@ export default function App() {
                           options={{header: () => <Header title="Profile" />}}
                         />
                         <Stack.Screen name="Chat" component={Chat} />
+                        <Stack.Screen
+                          name="GifPicker"
+                          component={GifPicker}
+                          options={{
+                            header: () => <Header title="GIF Picker" />,
+                          }}
+                        />
                         <Stack.Screen
                           name="Gallery"
                           component={Gallery}
