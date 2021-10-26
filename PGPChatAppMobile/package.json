@@ -5,7 +5,7 @@
   "scripts": {
     "android": "react-native run-android",
     "ios": "react-native run-ios",
-    "start": "react-native start",
+    "start": "react-native start && adb reverse tcp:5000 tcp:5000",
     "postversion": "react-native-version --never-amend"
   },
   "dependencies": {

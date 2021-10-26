@@ -50,7 +50,7 @@ export type CallPayload = {
 const path = __DEV__
   ? DeviceInfo.isEmulatorSync()
     ? 'ws://10.0.2.2:5000'
-    : 'ws://192.168.1.82:5000'
+    : 'ws://localhost:5000'
   : 'wss://chatapp.tarasa24.dev'
 
 const socket = io(path, {

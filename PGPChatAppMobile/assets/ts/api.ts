@@ -4,7 +4,7 @@ import DeviceInfo from 'react-native-device-info'
 const prefixPath = __DEV__
   ? DeviceInfo.isEmulatorSync()
     ? 'http://10.0.2.2:5000'
-    : 'http://192.168.1.82:5000'
+    : 'http://localhost:5000'
   : 'https://chatapp.tarasa24.dev/app-api'
 
 export function fetchRest(
