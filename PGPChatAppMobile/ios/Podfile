@@ -30,6 +30,8 @@ target 'PGPChatApp' do
 
   pod 'react-native-webrtc', :path => '../node_modules/react-native-webrtc'
 
+  pod 'react-native-splash-screen', :path => '../node_modules/react-native-splash-screen'
+
   target 'PGPChatAppTests' do
     inherit! :complete
     # Pods for testing

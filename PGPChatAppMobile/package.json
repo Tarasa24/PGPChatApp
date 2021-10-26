@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
+    "android": "react-native run-android && adb reverse tcp:5000 tcp:5000",
     "ios": "react-native run-ios",
-    "start": "react-native start && adb reverse tcp:5000 tcp:5000",
+    "start": "react-native start",
     "postversion": "react-native-version --never-amend",
     "format": "prettier --write ."
   },
@@ -47,6 +47,7 @@
     "react-native-safe-area-context": "^3.1.9",
     "react-native-screens": "^2.15.2",
     "react-native-sound-level": "^1.1.5",
+    "react-native-splash-screen": "^3.2.0",
     "react-native-sqlite-storage": "^5.0.0",
     "react-native-svg": "^12.1.0",
     "react-native-toast-message": "^1.4.3",

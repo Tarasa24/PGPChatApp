@@ -32,6 +32,7 @@ import { Connection } from 'typeorm'
 import * as Socket from './assets/ts/socketio'
 import PushNotification from 'react-native-push-notification'
 import { navigationRef } from './assets/ts/navigation'
+import SplashScreen from 'react-native-splash-screen'
 
 // Globals
 global.Buffer = global.Buffer || require('buffer').Buffer
@@ -59,6 +60,9 @@ export default function App() {
 
       // Clear recieved notifications
       PushNotification.removeAllDeliveredNotifications()
+
+      // Reveal app
+      SplashScreen.hide()
     })
 
     // Obtain necessary permissions
