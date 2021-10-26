@@ -47,22 +47,27 @@ export default function Gallery(props: Props) {
         .where(`parentMessageId In('${Object.keys(ids).join("', '")}')`)
         .execute()
 
-      for (let i = 0; i < f.length; i++) {
-        if (f[i].renderable) {
-          f[i].b64 = await RNFS.readFile(f[i].uri, 'base64')
+      if (f.length === 0) setFiles([{} as PreviewFileType])
+      else {
+        for (let i = 0; i < f.length; i++) {
+          if (f[i].renderable) {
+            f[i].b64 = await RNFS.readFile(f[i].uri, 'base64')
+          }
         }
-      }
 
-      setFiles(
-        f.sort((a, b) => {
-          return ids[b.parentMessageId] - ids[a.parentMessageId]
-        })
-      )
+        setFiles(
+          f.sort((a, b) => {
+            return ids[b.parentMessageId] - ids[a.parentMessageId]
+          }),
+        )
+      }
     })()
   }, [])
 
   function renderFiles() {
     const out = []
+
+    if (Object.keys(files[0]).length === 0) return
 
     files.forEach((file, i) => {
       if (file.renderable)
@@ -72,8 +77,7 @@ export default function Gallery(props: Props) {
               activeOpacity={0.7}
               onPress={() => {
                 navigation.navigate('PreviewFile', { file: file })
-              }}
-            >
+              }}>
               <Image
                 style={{ height: 200, width: '100%' }}
                 source={{
@@ -81,7 +85,7 @@ export default function Gallery(props: Props) {
                 }}
               />
             </TouchableOpacity>
-          </View>
+          </View>,
         )
       else
         out.push(
@@ -92,27 +96,24 @@ export default function Gallery(props: Props) {
               width: '50%',
               justifyContent: 'center',
               alignItems: 'center',
-            }}
-          >
+            }}>
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
                 navigation.navigate('PreviewFile', { file: file })
-              }}
-            >
+              }}>
               <View
                 style={{
                   justifyContent: 'center',
                   alignItems: 'center',
                   minWidth: '100%',
                   minHeight: '100%',
-                }}
-              >
+                }}>
                 <Icon name="document" size={64} color={theme.colors.text} />
                 <Text style={{ color: theme.colors.text }}>{file.name}</Text>
               </View>
             </TouchableOpacity>
-          </View>
+          </View>,
         )
     })
 
@@ -121,8 +122,7 @@ export default function Gallery(props: Props) {
 
   return (
     <View
-      style={{ backgroundColor: theme.colors.background, minHeight: '100%' }}
-    >
+      style={{ backgroundColor: theme.colors.background, minHeight: '100%' }}>
       {files.length > 0 ? (
         <ScrollView>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
