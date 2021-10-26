@@ -52,8 +52,7 @@ export default function PreviewFile(props: Props) {
           }}
           resizeMode={'contain'}
           source={{
-            uri: `data:${props.route.params.file.mime};base64,${props.route
-              .params.file.b64}`,
+            uri: `data:${props.route.params.file.mime};base64,${props.route.params.file.b64}`,
           }}
         />
       )
@@ -68,9 +67,7 @@ export default function PreviewFile(props: Props) {
           }}
         >
           <Icon name="document" color={theme.colors.text} size={128} />
-          <Text style={{ color: theme.colors.text }}>
-            {props.route.params.file.name}
-          </Text>
+          <Text style={{ color: theme.colors.text }}>{props.route.params.file.name}</Text>
         </View>
       )
   }

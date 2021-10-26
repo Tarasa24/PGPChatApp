@@ -7,10 +7,7 @@ export enum StateEnum {
 const initialState = StateEnum.Connecting
 
 export interface Action {
-  type:
-    | 'SET_SOCKET_DISCONNECTED'
-    | 'SET_SOCKET_CONNECTING'
-    | 'SET_SOCKET_CONNECTED'
+  type: 'SET_SOCKET_DISCONNECTED' | 'SET_SOCKET_CONNECTING' | 'SET_SOCKET_CONNECTED'
   payload: {}
 }
 

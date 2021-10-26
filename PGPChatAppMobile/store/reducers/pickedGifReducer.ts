@@ -1,4 +1,4 @@
-import {InlineFile} from '../../screens/Chat'
+import { InlineFile } from '../../screens/Chat'
 
 const initialState = {}
 

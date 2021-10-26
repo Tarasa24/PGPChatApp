@@ -15,22 +15,19 @@ function SocketConnectionStatus(props: Props) {
   }
   const [selectedVariant, setSelectedVariant] = useState(variants.connecting)
 
-  useEffect(
-    () => {
-      switch (props.socketConnected) {
-        case socketConnectedReducer.StateEnum.Disconnected:
-          setSelectedVariant(variants.disconnected)
-          break
-        case socketConnectedReducer.StateEnum.Connecting:
-          setSelectedVariant(variants.connecting)
-          break
-        case socketConnectedReducer.StateEnum.Connected:
-          setSelectedVariant(variants.connected)
-          break
-      }
-    },
-    [props.socketConnected]
-  )
+  useEffect(() => {
+    switch (props.socketConnected) {
+      case socketConnectedReducer.StateEnum.Disconnected:
+        setSelectedVariant(variants.disconnected)
+        break
+      case socketConnectedReducer.StateEnum.Connecting:
+        setSelectedVariant(variants.connecting)
+        break
+      case socketConnectedReducer.StateEnum.Connected:
+        setSelectedVariant(variants.connected)
+        break
+    }
+  }, [props.socketConnected])
   return (
     <View
       style={{
@@ -53,6 +50,4 @@ const mapStateToProps = (state: any) => ({
 
 const mapDispatchToProps = (dispatch: any) => ({})
 
-export default connect(mapStateToProps, mapDispatchToProps)(
-  SocketConnectionStatus
-)
+export default connect(mapStateToProps, mapDispatchToProps)(SocketConnectionStatus)

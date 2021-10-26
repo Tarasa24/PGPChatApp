@@ -4,16 +4,14 @@ import {
   ActivityIndicator,
   NativeModules,
   Platform,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native'
-import {
-  TouchableHighlight,
-  TouchableOpacity,
-} from 'react-native-gesture-handler'
+import { TouchableHighlight, TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-ionicons'
 import { connect } from 'react-redux'
 import { getRepository, Not } from 'typeorm'
@@ -25,10 +23,12 @@ import { useTheme } from '../components/ThemeContext'
 import { LocalUserState } from '../store/reducers/localUserReducer'
 import * as Chat from './Chat'
 import Time from '../components/Time'
+import { socket } from '../assets/ts/socketio'
 
 interface Props {
   localUser: LocalUserState
   messageUpdatesList: string[]
+  userNames: Map<string, string>
 }
 
 function Chats(props: Props) {
@@ -53,67 +53,66 @@ function Chats(props: Props) {
   const [stage, setStage] = useState(Stage.Loading)
   const [users, setUsers] = useState({ self: null, others: [] } as Users)
 
-  useEffect(
-    () => {
-      async function prepareChats() {
-        const userRepository = getRepository(User)
-        const messageRepository = getRepository(Message)
-        const fileRepository = getRepository(File)
+  async function prepareChats() {
+    const userRepository = getRepository(User)
+    const messageRepository = getRepository(Message)
+    const fileRepository = getRepository(File)
 
-        const self = await userRepository.findOneOrFail({
-          id: props.localUser.id,
-        })
-        const allUsers = await userRepository.find({
-          where: { id: Not(props.localUser.id) },
-        })
+    const self = await userRepository.findOneOrFail({
+      id: props.localUser.id,
+    })
+    const allUsers = await userRepository.find({
+      where: { id: Not(props.localUser.id) },
+    })
 
-        let others = [] as Others[]
+    let others = [] as Others[]
 
-        for (const user of allUsers) {
-          const lastMessage = await messageRepository.findOne({
-            where: [
-              {
-                recipient: self,
-                author: user,
-                status: Not(MessageStatus.deleted),
-              },
-              {
-                recipient: user,
-                author: self,
-                status: Not(MessageStatus.deleted),
-              },
-            ],
-            order: { timestamp: 'DESC' },
-          })
-
-          lastMessage.files = await fileRepository.find({
-            where: { parentMessage: lastMessage.id },
-            select: ['name'],
-          })
-
-          others.push({
-            user: user,
-            lastMessage: lastMessage ? lastMessage : null,
-          })
-        }
-
-        others.sort((a, b) => {
-          return b.lastMessage.timestamp - a.lastMessage.timestamp
-        })
-        setUsers({ self: self, others: others })
-      }
-
-      navigation.setOptions({
-        header: () => <ChatsHeader />,
+    for (const user of allUsers) {
+      const lastMessage = await messageRepository.findOne({
+        where: [
+          {
+            recipient: self,
+            author: user,
+            status: Not(MessageStatus.deleted),
+          },
+          {
+            recipient: user,
+            author: self,
+            status: Not(MessageStatus.deleted),
+          },
+        ],
+        order: { timestamp: 'DESC' },
       })
 
-      setStage(Stage.Loading)
-      prepareChats()
-        .then(() => setStage(Stage.Loaded))
-        .catch(() => setStage(Stage.Loaded))
-    },
-    [props.messageUpdatesList]
-  )
+      if (lastMessage)
+        lastMessage.files = await fileRepository.find({
+          where: { parentMessage: lastMessage.id },
+          select: ['name'],
+        })
+
+      others.push({
+        user: user,
+        lastMessage: lastMessage ? lastMessage : null,
+      })
+    }
+
+    others.sort((a, b) => {
+      if (!a.lastMessage || !b.lastMessage) return -1
+      else return b.lastMessage.timestamp - a.lastMessage.timestamp
+    })
+    setUsers({ self: self, others: others })
+  }
+
+  useEffect(() => {
+    navigation.setOptions({
+      header: () => <ChatsHeader />,
+    })
+
+    setStage(Stage.Loading)
+    prepareChats()
+      .then(() => setStage(Stage.Loaded))
+      .catch(() => setStage(Stage.Loaded))
+  }, [props.messageUpdatesList, props.userNames])
 
   function statusIcon(lastMessage: Message | null) {
     switch (lastMessage.status) {
@@ -132,9 +131,7 @@ function Chats(props: Props) {
     function messageText(msg: Message) {
       if (msg.files && msg.files.length > 0) {
         let out =
-          msg.files.length === 1
-            ? '📎 ' + msg.text
-            : msg.files.length + '📎 ' + msg.text
+          msg.files.length === 1 ? '📎 ' + msg.text : msg.files.length + '📎 ' + msg.text
         if (msg.text === '')
           out += msg.files
             .map((f) => {
@@ -190,30 +187,32 @@ function Chats(props: Props) {
               onPress={() =>
                 navigation.navigate('Chat', {
                   participants: { self: users.self, other: other.user },
-                } as Chat.RouteParams)}
+                } as Chat.RouteParams)
+              }
             >
               <View style={styles.row}>
                 <View style={{ paddingHorizontal: 5, position: 'relative' }}>
                   <Avatar userID={other.user.id} size={60} />
-                  {other.lastMessage ? other.lastMessage.status ===
-                    MessageStatus.recieved &&
-                  other.lastMessage.recipient.id === props.localUser.id ? (
-                    <View
-                      style={{
-                        backgroundColor: 'orange',
-                        borderRadius: 100,
-                        width: 27.5,
-                        height: 27.5,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        position: 'absolute',
-                        right: 0,
-                        zIndex: 9,
-                      }}
-                    >
-                      <Icon name="alert" color="white" size={20} />
-                    </View>
-                  ) : null : null}
+                  {other.lastMessage ? (
+                    other.lastMessage.status === MessageStatus.recieved &&
+                    other.lastMessage.recipient.id === props.localUser.id ? (
+                      <View
+                        style={{
+                          backgroundColor: 'orange',
+                          borderRadius: 100,
+                          width: 27.5,
+                          height: 27.5,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          position: 'absolute',
+                          right: 0,
+                          zIndex: 9,
+                        }}
+                      >
+                        <Icon name="alert" color="white" size={20} />
+                      </View>
+                    ) : null
+                  ) : null}
                 </View>
 
                 <View style={styles.text}>
@@ -244,7 +243,25 @@ function Chats(props: Props) {
           )
         }
         return (
-          <ScrollView style={{ minHeight: '100%' }}>
+          <ScrollView
+            style={{ minHeight: '100%' }}
+            refreshControl={
+              <RefreshControl
+                refreshing={false}
+                colors={[theme.colors.primary]}
+                progressBackgroundColor={lightenDarkenColor(theme.colors.background, 50)}
+                onRefresh={() => {
+                  setStage(Stage.Loading)
+                  if (socket.connected) socket.disconnect()
+                  socket.connect()
+
+                  prepareChats()
+                    .then(() => setStage(Stage.Loaded))
+                    .catch(() => setStage(Stage.Loaded))
+                }}
+              />
+            }
+          >
             <View style={styles.search}>
               <TextInput
                 style={{
@@ -326,6 +343,7 @@ function Chats(props: Props) {
 const mapStateToProps = (state: any) => ({
   localUser: state.localUserReducer,
   messageUpdatesList: state.messageUpdatesListReducer,
+  userNames: state.userNamesReducer,
 })
 
 const mapDispatchToProps = (dispatch: any) => ({})

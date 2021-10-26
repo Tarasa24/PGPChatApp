@@ -1,11 +1,11 @@
-import React, {useEffect, useState} from 'react'
-import {Image, ActivityIndicator} from 'react-native'
-import {getRepository} from 'typeorm'
-import {File} from '../assets/ts/orm'
-import Svg, {Circle, Text} from 'react-native-svg'
-import {useTheme} from './ThemeContext'
-import {lightenDarkenColor} from '../assets/ts/lightenDarkenColor'
-import {connect} from 'react-redux'
+import React, { useEffect, useState } from 'react'
+import { Image, ActivityIndicator } from 'react-native'
+import { getRepository } from 'typeorm'
+import { File } from '../assets/ts/orm'
+import Svg, { Circle, Text } from 'react-native-svg'
+import { useTheme } from './ThemeContext'
+import { lightenDarkenColor } from '../assets/ts/lightenDarkenColor'
+import { connect } from 'react-redux'
 import * as RNFS from 'react-native-fs'
 import * as userAvatarsReducer from '../store/reducers/userAvatarsReducer'
 
@@ -27,10 +27,10 @@ function Avatar(props: Props) {
 
   interface Status {
     status: StatusEnum
-    picture?: File & {b64: string}
+    picture?: File & { b64: string }
   }
 
-  const [status, setStatus] = useState({status: StatusEnum.Loading} as Status)
+  const [status, setStatus] = useState({ status: StatusEnum.Loading } as Status)
 
   useEffect(() => {
     async function main() {
@@ -38,7 +38,7 @@ function Avatar(props: Props) {
 
       if (fileID) {
         const fileRepository = getRepository(File)
-        const picture = await fileRepository.findOne({id: fileID})
+        const picture = await fileRepository.findOne({ id: fileID })
 
         if (await RNFS.exists(picture.uri))
           setStatus({
@@ -50,10 +50,10 @@ function Avatar(props: Props) {
           })
         else {
           await fileRepository.delete(picture)
-          setStatus({status: StatusEnum.Svg})
+          setStatus({ status: StatusEnum.Svg })
           props.dropAvatar(props.userID)
         }
-      } else setStatus({status: StatusEnum.Svg})
+      } else setStatus({ status: StatusEnum.Svg })
     }
 
     main()
@@ -63,7 +63,7 @@ function Avatar(props: Props) {
     if (status.status === StatusEnum.Image)
       return (
         <Image
-          style={{width: props.size, height: props.size, borderRadius: 100}}
+          style={{ width: props.size, height: props.size, borderRadius: 100 }}
           source={{
             uri: `data:${status.picture.mime};base64,${status.picture.b64}`,
           }}
@@ -84,7 +84,8 @@ function Avatar(props: Props) {
             fontSize={props.size / 2}
             x={props.size / 2}
             y={props.size / 1.5}
-            textAnchor="middle">
+            textAnchor="middle"
+          >
             {props.userID ? props.userID[0] : '?'}
           </Text>
         </Svg>
@@ -103,7 +104,7 @@ const mapDispatchToProps = (dispatch: any) => ({
   dropAvatar: (userID: string) =>
     dispatch({
       type: 'DROP_USER_AVATAR',
-      payload: {userID: userID},
+      payload: { userID: userID },
     } as userAvatarsReducer.Action),
 })
 

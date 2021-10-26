@@ -1,5 +1,5 @@
-import {useNavigation} from '@react-navigation/native'
-import React, {useEffect, useState} from 'react'
+import { useNavigation } from '@react-navigation/native'
+import React, { useEffect, useState } from 'react'
 import {
   Alert,
   Image,
@@ -10,22 +10,17 @@ import {
   View,
 } from 'react-native'
 import Icon from 'react-native-ionicons'
-import {File, Message, User} from '../assets/ts/orm'
+import { File, Message, User } from '../assets/ts/orm'
 import Avatar from './Avatar'
 import * as Gallery from '../screens/Gallery'
-import {useTheme} from './ThemeContext'
-import {
-  Menu,
-  MenuOption,
-  MenuOptions,
-  MenuTrigger,
-} from 'react-native-popup-menu'
-import {getConnection, getRepository} from 'typeorm'
+import { useTheme } from './ThemeContext'
+import { Menu, MenuOption, MenuOptions, MenuTrigger } from 'react-native-popup-menu'
+import { getConnection, getRepository } from 'typeorm'
 import * as messageUpdatesListReducer from '../store/reducers/messageUpdatesListReducer'
-import {connect} from 'react-redux'
+import { connect } from 'react-redux'
 import SocketConnectionStatus from './SocketConnectionStatus'
-import {store} from '../store/store'
-import {CallPayload, socket} from '../assets/ts/socketio'
+import { store } from '../store/store'
+import { CallPayload, socket } from '../assets/ts/socketio'
 import uuid from 'react-native-uuid'
 import * as Profile from '../screens/Profile'
 import * as socketConnectedReducer from '../store/reducers/socketConnectedReducer'
@@ -60,11 +55,13 @@ function ChatHeader(props: Props) {
           ...{
             backgroundColor: theme.colors.primary,
           },
-        }}>
+        }}
+      >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.icon}
-          activeOpacity={0.7}>
+          activeOpacity={0.7}
+        >
           <Icon name="arrow-back" size={25} color="white" />
         </TouchableOpacity>
         <View
@@ -73,7 +70,8 @@ function ChatHeader(props: Props) {
             alignItems: 'center',
             marginLeft: 15,
             flex: 1,
-          }}>
+          }}
+        >
           <TouchableOpacity
             activeOpacity={0.7}
             style={{
@@ -87,7 +85,8 @@ function ChatHeader(props: Props) {
               navigation.navigate('Profile', {
                 user: props.user,
               } as Profile.RouteParams)
-            }>
+            }
+          >
             <Avatar userID={props.user.id} size={35} />
             <Text
               style={{
@@ -96,7 +95,8 @@ function ChatHeader(props: Props) {
                 color: 'white',
               }}
               ellipsizeMode="tail"
-              numberOfLines={1}>
+              numberOfLines={1}
+            >
               {name ? name : props.user.id}
             </Text>
           </TouchableOpacity>
@@ -107,7 +107,7 @@ function ChatHeader(props: Props) {
                 'Start a call',
                 'This just might be a missclick. Are you sure you wanna start the call? ',
                 [
-                  {text: 'No', style: 'cancel'},
+                  { text: 'No', style: 'cancel' },
                   {
                     text: 'Yes',
                     style: 'default',
@@ -119,21 +119,20 @@ function ChatHeader(props: Props) {
                         calleePeerToken: uuid.v4().toString(),
                       } as CallPayload),
                   },
-                ],
+                ]
               )
             }}
             style={styles.icon}
             disabled={
-              props.socketConnected !==
-              socketConnectedReducer.StateEnum.Connected
+              props.socketConnected !== socketConnectedReducer.StateEnum.Connected
             }
-            activeOpacity={0.7}>
+            activeOpacity={0.7}
+          >
             <Icon
               name="call"
               size={25}
               color={
-                props.socketConnected !==
-                socketConnectedReducer.StateEnum.Connected
+                props.socketConnected !== socketConnectedReducer.StateEnum.Connected
                   ? 'grey'
                   : 'white'
               }
@@ -149,19 +148,21 @@ function ChatHeader(props: Props) {
                 backgroundColor: theme.colors.background,
                 borderColor: theme.colors.border,
                 borderWidth: 1,
-              }}>
+              }}
+            >
               <MenuOption
                 onSelect={() => {
                   navigation.navigate('Profile', {
                     user: props.user,
                   } as Profile.RouteParams)
-                }}>
-                <Text style={{...styles.optionText, color: theme.colors.text}}>
+                }}
+              >
+                <Text style={{ ...styles.optionText, color: theme.colors.text }}>
                   Conversation settings
                 </Text>
               </MenuOption>
               <MenuOption onSelect={() => {}}>
-                <Text style={{...styles.optionText, color: theme.colors.text}}>
+                <Text style={{ ...styles.optionText, color: theme.colors.text }}>
                   Search
                 </Text>
               </MenuOption>
@@ -170,13 +171,14 @@ function ChatHeader(props: Props) {
                   navigation.navigate('Gallery', {
                     user: props.user,
                   } as Gallery.RouteParams)
-                }}>
-                <Text style={{...styles.optionText, color: theme.colors.text}}>
+                }}
+              >
+                <Text style={{ ...styles.optionText, color: theme.colors.text }}>
                   Media
                 </Text>
               </MenuOption>
               <MenuOption onSelect={() => {}}>
-                <Text style={{...styles.optionText, color: theme.colors.text}}>
+                <Text style={{ ...styles.optionText, color: theme.colors.text }}>
                   Mute notifications
                 </Text>
               </MenuOption>
@@ -186,7 +188,7 @@ function ChatHeader(props: Props) {
                     'Are you sure you want to proceed?',
                     'You are about to delte this whole conversation including all the messages and the contact itself.',
                     [
-                      {text: 'No', style: 'default'},
+                      { text: 'No', style: 'default' },
                       {
                         text: 'Yes, proceed',
                         style: 'destructive',
@@ -234,10 +236,11 @@ function ChatHeader(props: Props) {
                           props.addToMessageUpdateList('null')
                         },
                       },
-                    ],
+                    ]
                   )
-                }>
-                <Text style={{...styles.optionText, color: 'red'}}>
+                }
+              >
+                <Text style={{ ...styles.optionText, color: 'red' }}>
                   Delete conversation
                 </Text>
               </MenuOption>
@@ -279,18 +282,18 @@ const mapDispatchToProps = (dispatch: any) => ({
   addToMessageUpdateList: (messageId: string | string[]) => {
     dispatch({
       type: 'ADD_TO_MESSAGE_UPDATES_LIST',
-      payload: {messageID: messageId},
+      payload: { messageID: messageId },
     } as messageUpdatesListReducer.Action)
   },
   dropAvatar: (userID: string) =>
     dispatch({
       type: 'DROP_USER_AVATAR',
-      payload: {userID: userID},
+      payload: { userID: userID },
     } as userAvatarsReducer.Action),
   dropUsername: (userID: string) =>
     dispatch({
       type: 'DROP_USER_NAME',
-      payload: {userID: userID},
+      payload: { userID: userID },
     } as userNamesReducer.Action),
 })
 

@@ -1,25 +1,17 @@
-import React, {useEffect, useState} from 'react'
-import {
-  Alert,
-  Button,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
-} from 'react-native'
-import {ScrollView, TouchableOpacity} from 'react-native-gesture-handler'
-import {connect} from 'react-redux'
-import {lightenDarkenColor} from '../assets/ts/lightenDarkenColor'
-import {useTheme} from '../components/ThemeContext'
+import React, { useEffect, useState } from 'react'
+import { Alert, Button, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
+import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler'
+import { connect } from 'react-redux'
+import { lightenDarkenColor } from '../assets/ts/lightenDarkenColor'
+import { useTheme } from '../components/ThemeContext'
 import Clipboard from '@react-native-clipboard/clipboard'
 import Icon from 'react-native-ionicons'
 import Toast from 'react-native-toast-message'
-import DocumentPicker, {MimeType} from 'react-native-document-picker'
-import {File, User} from '../assets/ts/orm'
+import DocumentPicker, { MimeType } from 'react-native-document-picker'
+import { File, User } from '../assets/ts/orm'
 
 import * as RNFS from 'react-native-fs'
-import {getConnection, getRepository} from 'typeorm'
+import { getConnection, getRepository } from 'typeorm'
 import Avatar from '../components/Avatar'
 
 import * as localUserReducer from '../store/reducers/localUserReducer'
@@ -89,22 +81,16 @@ export function Profile(props: Props) {
     const picture = new File()
     picture.mime = mime
     picture.name = name
-    picture.uri = `${
-      RNFS.ExternalStorageDirectoryPath
-    }/PGPChatApp/${Date.now()}-${name}`
+    picture.uri = `${RNFS.ExternalStorageDirectoryPath}/PGPChatApp/${Date.now()}-${name}`
 
     await RNFS.mkdir(RNFS.ExternalStorageDirectoryPath + '/PGPChatApp')
-    await RNFS.writeFile(
-      picture.uri,
-      await RNFS.readFile(uri, 'base64'),
-      'base64',
-    )
+    await RNFS.writeFile(picture.uri, await RNFS.readFile(uri, 'base64'), 'base64')
 
     // Calculate hash
     const fileHash = await RNFetchBlob.fs.hash(picture.uri, 'sha256')
 
     // Check if a file with the same hash exists
-    const hashedFiles = await fileRepository.find({where: {hash: fileHash}})
+    const hashedFiles = await fileRepository.find({ where: { hash: fileHash } })
 
     // If it does, unlink the new file and use previous uri
     if (hashedFiles.length >= 1) {
@@ -139,7 +125,8 @@ export function Profile(props: Props) {
             position: 'absolute',
             right: 0,
             zIndex: 9,
-          }}>
+          }}
+        >
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() =>
@@ -152,7 +139,8 @@ export function Profile(props: Props) {
                   props.dropAvatar(localUser.id)
                   removeImageFromUser(localUser)
                 })
-            }>
+            }
+          >
             <View
               style={{
                 backgroundColor: theme.colors.primary,
@@ -161,7 +149,8 @@ export function Profile(props: Props) {
                 height: 35,
                 alignItems: 'center',
                 justifyContent: 'center',
-              }}>
+              }}
+            >
               <Icon name="close" color="white" />
             </View>
           </TouchableOpacity>
@@ -180,19 +169,17 @@ export function Profile(props: Props) {
   }
 
   return (
-    <View style={{height: '100%', backgroundColor: theme.colors.background}}>
-      <Toast ref={(ref) => Toast.setRef(ref)} style={{zIndex: 9}} />
+    <View style={{ height: '100%', backgroundColor: theme.colors.background }}>
+      <Toast ref={(ref) => Toast.setRef(ref)} style={{ zIndex: 9 }} />
       <ScrollView>
         <View
           style={{
             marginVertical: 20,
             alignItems: 'center',
-          }}>
-          <View style={{marginBottom: 2.5, position: 'relative', padding: 7.5}}>
-            <TouchableOpacity
-              disabled={isSelf}
-              activeOpacity={0.7}
-              onPress={selectImage}>
+          }}
+        >
+          <View style={{ marginBottom: 2.5, position: 'relative', padding: 7.5 }}>
+            <TouchableOpacity disabled={isSelf} activeOpacity={0.7} onPress={selectImage}>
               <Avatar userID={props.route.params.user.id} size={100} />
             </TouchableOpacity>
             {clearAvatarButton()}
@@ -207,15 +194,14 @@ export function Profile(props: Props) {
                 justifyContent: 'center',
                 flexDirection: 'row',
                 alignItems: 'center',
-              }}>
+              }}
+            >
               <TextInput
                 style={styles.input}
                 placeholder="Nickname"
                 value={name}
                 multiline={false}
-                onChangeText={(change) =>
-                  setName(change.length === 0 ? null : change)
-                }
+                onChangeText={(change) => setName(change.length === 0 ? null : change)}
               />
               {showSaveButton && (
                 <View>
@@ -238,7 +224,8 @@ export function Profile(props: Props) {
                       await userRepository.save(props.route.params.user)
 
                       props.setNameDispatch(props.route.params.user.id, name)
-                    }}>
+                    }}
+                  >
                     <Icon name="save" color="white" />
                   </TouchableOpacity>
                 </View>
@@ -248,7 +235,11 @@ export function Profile(props: Props) {
 
           <TouchableOpacity
             activeOpacity={0.7}
-            style={{flexDirection: 'row', alignItems: 'center', marginTop: 10}}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginTop: 10,
+            }}
             onPress={() => {
               Toast.show({
                 type: 'info',
@@ -257,14 +248,15 @@ export function Profile(props: Props) {
                 visibilityTime: 1500,
               })
               Clipboard.setString(props.route.params.user.id)
-            }}>
-            <Text style={{color: theme.colors.text, fontSize: 19}}>
+            }}
+          >
+            <Text style={{ color: theme.colors.text, fontSize: 19 }}>
               {props.route.params.user.id}
             </Text>
             <Icon
               name="copy"
               size={21}
-              style={{marginLeft: 10}}
+              style={{ marginLeft: 10 }}
               color={theme.colors.text}
             />
           </TouchableOpacity>
@@ -274,27 +266,29 @@ export function Profile(props: Props) {
             style={{
               flexDirection: 'column',
               marginTop: 20,
-            }}>
+            }}
+          >
             <Text
               style={{
                 textAlign: 'center',
                 color: theme.colors.text,
                 marginVertical: 15,
                 fontSize: 25,
-              }}>
+              }}
+            >
               Settings
             </Text>
             <View style={styles.rowContainer}>
-              <Text style={{color: theme.colors.text}}>Dark mode</Text>
+              <Text style={{ color: theme.colors.text }}>Dark mode</Text>
               <Switch
                 trackColor={{
                   false: lightenDarkenColor(
                     theme.colors.primary,
-                    100 * (theme.dark ? -1 : 1),
+                    100 * (theme.dark ? -1 : 1)
                   ),
                   true: lightenDarkenColor(
                     theme.colors.primary,
-                    100 * (theme.dark ? -1 : 1),
+                    100 * (theme.dark ? -1 : 1)
                   ),
                 }}
                 thumbColor={theme.colors.primary}
@@ -303,16 +297,16 @@ export function Profile(props: Props) {
               />
             </View>
             <View style={styles.rowContainer}>
-              <Text style={{color: theme.colors.text}}>GF mode</Text>
+              <Text style={{ color: theme.colors.text }}>GF mode</Text>
               <Switch
                 trackColor={{
                   false: lightenDarkenColor(
                     theme.colors.primary,
-                    100 * (theme.dark ? -1 : 1),
+                    100 * (theme.dark ? -1 : 1)
                   ),
                   true: lightenDarkenColor(
                     theme.colors.primary,
-                    100 * (theme.dark ? -1 : 1),
+                    100 * (theme.dark ? -1 : 1)
                   ),
                 }}
                 thumbColor={theme.colors.primary}
@@ -326,7 +320,8 @@ export function Profile(props: Props) {
                 marginTop: 30,
                 alignSelf: 'center',
                 width: '60%',
-              }}>
+              }}
+            >
               <Button
                 onPress={() => {
                   Alert.alert(
@@ -344,15 +339,14 @@ export function Profile(props: Props) {
                             Toast.show({
                               type: 'success',
                               position: 'bottom',
-                              text1:
-                                'Private Key has been successfully exported',
+                              text1: 'Private Key has been successfully exported',
                               text2: uri,
                               visibilityTime: 5000,
                             })
                           })
                         },
                       },
-                    ],
+                    ]
                   )
                 }}
                 title="Export private key"
@@ -363,17 +357,18 @@ export function Profile(props: Props) {
         )}
 
         {!isSelf && (
-          <View style={{marginTop: 10}}>
+          <View style={{ marginTop: 10 }}>
             <Text
               style={{
                 textAlign: 'center',
                 color: theme.colors.text,
                 marginVertical: 15,
                 fontSize: 25,
-              }}>
+              }}
+            >
               Gallery
             </Text>
-            <Gallery route={{params: {user: props.route.params.user}}} />
+            <Gallery route={{ params: { user: props.route.params.user } }} />
           </View>
         )}
       </ScrollView>
@@ -387,22 +382,22 @@ const mapStateToProps = (state: any) => ({
 })
 
 const mapDispatchToProps = (dispatch: any) => ({
-  reduxSetDark: () => dispatch({type: 'SET_DARK'}),
-  reduxSetLight: () => dispatch({type: 'SET_LIGHT'}),
+  reduxSetDark: () => dispatch({ type: 'SET_DARK' }),
+  reduxSetLight: () => dispatch({ type: 'SET_LIGHT' }),
   setAvatar: (userID: string, fileID: string) =>
     dispatch({
       type: 'SET_USER_AVATAR',
-      payload: {userID: userID, fileID: fileID},
+      payload: { userID: userID, fileID: fileID },
     } as userAvatarsReducer.Action),
   dropAvatar: (userID: string) =>
     dispatch({
       type: 'DROP_USER_AVATAR',
-      payload: {userID: userID},
+      payload: { userID: userID },
     } as userAvatarsReducer.Action),
   setNameDispatch: (userID: string, name: string) =>
     dispatch({
       type: 'SET_USER_NAME',
-      payload: {userID: userID, name: name},
+      payload: { userID: userID, name: name },
     } as userNamesReducer.Action),
 })
 

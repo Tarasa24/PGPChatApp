@@ -7,10 +7,7 @@ const prefixPath = __DEV__
     : 'http://localhost:5000'
   : 'https://chatapp.tarasa24.dev/app-api'
 
-export function fetchRest(
-  url: string,
-  options?: RequestInit
-): Promise<Response> {
+export function fetchRest(url: string, options?: RequestInit): Promise<Response> {
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       reject(new Error('Timeout'))

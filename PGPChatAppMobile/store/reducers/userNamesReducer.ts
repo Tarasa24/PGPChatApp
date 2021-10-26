@@ -11,12 +11,12 @@ interface Payload {
   name?: string
 }
 
-export default (state = initialState, {type, payload}: Action) => {
+export default (state = initialState, { type, payload }: Action) => {
   switch (type) {
     case 'SET_USER_NAME':
-      return {...state, [payload.userID]: payload.name}
+      return { ...state, [payload.userID]: payload.name }
     case 'DROP_USER_NAME':
-      return {...state, [payload.userID]: null}
+      return { ...state, [payload.userID]: null }
     default:
       return state
   }

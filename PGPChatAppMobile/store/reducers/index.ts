@@ -1,5 +1,5 @@
 // Imports: Dependencies
-import {combineReducers} from 'redux'
+import { combineReducers } from 'redux'
 // Imports: Reducers
 import colorSchemeReducer from './colorSchemeReducer'
 import localUserReducer from './localUserReducer'

@@ -157,7 +157,13 @@ export function LandingPage(props) {
             )
           }}
         >
-          <Text style={{ fontWeight: 'bold', fontSize: 17, color: theme.colors.text }}>
+          <Text
+            style={{
+              fontWeight: 'bold',
+              fontSize: 17,
+              color: theme.colors.text,
+            }}
+          >
             Tarasa24
           </Text>
         </TouchableOpacity>

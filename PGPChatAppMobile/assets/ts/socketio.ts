@@ -121,6 +121,7 @@ async function login(socket: any) {
   } as socketConnectedReducer.Action)
 
   const localuser = store.getState().localUserReducer
+
   if (!localuser.id) {
     socket.disconnect()
     return
@@ -229,7 +230,9 @@ async function connect() {
 
         // Check if a file with the same hash exists
         const fileRepository = getRepository(ORM.File)
-        const hashedFiles = await fileRepository.find({ where: { hash: fileHash } })
+        const hashedFiles = await fileRepository.find({
+          where: { hash: fileHash },
+        })
 
         // If it does, unlink the new file and use previous uri
         if (hashedFiles.length >= 1) {

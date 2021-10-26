@@ -12,6 +12,8 @@ import {
   BackHandler,
   StyleSheet,
   Image,
+  Alert,
+  ToastAndroid,
 } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-ionicons'
@@ -71,10 +73,8 @@ function Chat(props: Props) {
   const navigation = useNavigation()
   const theme = useTheme()
   const inputRef = useRef<TextInput>()
-  const [scrollViewRef, setScrollViewRef]: [
-    ScrollView,
-    (ref: ScrollView) => void
-  ] = useState(null)
+  const [scrollViewRef, setScrollViewRef]: [ScrollView, (ref: ScrollView) => void] =
+    useState(null)
 
   enum Stages {
     Loading,
@@ -534,12 +534,11 @@ function Chat(props: Props) {
       >
         <ScrollView horizontal={true}>{showInlineFiles()}</ScrollView>
         {inlineFiles.length > 0 && (
-          <Text style={{color: theme.colors.text}}>
+          <Text style={{ color: theme.colors.text }}>
             Space used:{' '}
             {(
-              inlineFiles
-                .map((e) => Buffer.from(e.b64).length)
-                .reduce((p, c) => p + c) / 1e6
+              inlineFiles.map((e) => Buffer.from(e.b64).length).reduce((p, c) => p + c) /
+              1e6
             ).toFixed(2)}{' '}
             / 16 MB
           </Text>
@@ -570,13 +569,22 @@ function Chat(props: Props) {
               ),
             }}
             multiline={true}
+            maxLength={700}
             placeholder="Start typing your message..."
             placeholderTextColor={lightenDarkenColor(
               theme.colors.text,
               150 * (theme.dark ? -1 : 1)
             )}
             value={inputState}
-            onChangeText={(change) => setInputState(change)}
+            onChangeText={(change) => {
+              if (change.length == 700)
+                ToastAndroid.showWithGravity(
+                  'Character limit hit',
+                  ToastAndroid.SHORT,
+                  ToastAndroid.BOTTOM
+                )
+              setInputState(change)
+            }}
             //@ts-ignore
             onImageChange={(event) => {
               const { mime, linkUri, uri, data } = event.nativeEvent
@@ -616,10 +624,7 @@ function Chat(props: Props) {
                       const file = res[i]
 
                       let compressed_b64
-                      if (
-                        file.type.includes('image') &&
-                        !file.type.includes('gif')
-                      )
+                      if (file.type.includes('image') && !file.type.includes('gif'))
                         compressed_b64 = await Compressor.Image.compress(
                           await RNFS.readFile(file.uri, 'base64'),
                           {
@@ -630,14 +635,14 @@ function Chat(props: Props) {
                             quality: 0.4,
                             output: 'jpg',
                             returnableOutputType: 'base64',
-                          },
+                          }
                         )
                       else {
                         if (file.size / 1e6 > 16) {
                           Alert.alert(
                             'Files have exceeded size of 16 MB',
                             'Try sending files individually or compressing them.',
-                            [{text: 'ok', style: 'default'}],
+                            [{ text: 'ok', style: 'default' }]
                           )
                           setInlineFiles([])
                           return
@@ -651,7 +656,7 @@ function Chat(props: Props) {
                         Alert.alert(
                           'Files have exceeded size of 16 MB',
                           'Try sending files individually or compressing them.',
-                          [{text: 'ok', style: 'default'}],
+                          [{ text: 'ok', style: 'default' }]
                         )
                         setInlineFiles([])
                         return
@@ -695,7 +700,8 @@ function Chat(props: Props) {
 
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => navigation.navigate('GifPicker')}>
+                onPress={() => navigation.navigate('GifPicker')}
+              >
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -853,6 +859,3 @@ const mapDispatchToProps = (dispatch: any) => ({
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(Chat)
-function id(id: any, messageID: string) {
-  throw new Error('Function not implemented.')
-}

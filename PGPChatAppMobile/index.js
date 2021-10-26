@@ -20,8 +20,7 @@ const options = {
   },
   android: {
     alertTitle: 'This application needs to access your phone accounts',
-    alertDescription:
-      "Without granting access you won't be able to recieve in-app calls",
+    alertDescription: "Without granting access you won't be able to recieve in-app calls",
     cancelButton: 'Cancel',
     okButton: 'Grant',
   },
@@ -31,7 +30,7 @@ RNCallKeep.setup(options)
 
 PushNotification.configure({
   // (optional) Called when Token is generated (iOS and Android)
-  onRegister: async function(token) {
+  onRegister: async function (token) {
     if (store.getState().localUserReducer.id) {
       const nonce = await fetchRest(
         '/keyserver/getNonce/' + store.getState().localUserReducer.id
