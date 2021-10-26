@@ -79,7 +79,7 @@ export default function(io: Server) {
         if (!data.userID || !data.signature) throw 'Invalid payload'
 
         // Verify the signature
-        if (!await verifyNonceSignature(data.userID, data.signature))
+        if (!(await verifyNonceSignature(data.userID, data.signature)))
           throw 'Invalid signature'
 
         // Add user to in-memory dictionary of userIDs and socketIDs (this works only with single instance of server)
