@@ -56,13 +56,13 @@ export default function App() {
       await connection.synchronize()
       setConnected(true)
 
+      // Reveal app
+      SplashScreen.hide()
+
       await Socket.connect()
 
       // Clear recieved notifications
       PushNotification.removeAllDeliveredNotifications()
-
-      // Reveal app
-      SplashScreen.hide()
     })
 
     // Obtain necessary permissions
