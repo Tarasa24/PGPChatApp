@@ -251,12 +251,6 @@ async function connect() {
 
     // Send acknowledgement of recieving and clean-up
     socket.emit('recieveAck', msg.id)
-    socket.emit('messageUpdate', {
-      to: msg.author.id,
-      from: store.getState().localUserReducer.id,
-      action: 'SET_STATUS_RECIEVED',
-      messageId: msg.id,
-    } as MessageUpdatePayload)
 
     store.dispatch({
       type: 'ADD_TO_MESSAGE_UPDATES_LIST',
@@ -287,6 +281,9 @@ async function connect() {
             .andWhere('status != :status', {
               status: ORM.MessageStatus.deleted,
             })
+            .andWhere('status < :status', {
+              status: ORM.MessageStatus.sent,
+            })
             .execute()
 
           break
@@ -301,6 +298,9 @@ async function connect() {
             .andWhere('status != :status', {
               status: ORM.MessageStatus.deleted,
             })
+            .andWhere('status < :status', {
+              status: ORM.MessageStatus.recieved,
+            })
             .execute()
           break
         case 'SET_STATUS_READ':
@@ -313,6 +313,9 @@ async function connect() {
             .where('id = :id', { id: payload.messageId })
             .andWhere('status != :status', {
               status: ORM.MessageStatus.deleted,
+            })
+            .andWhere('status < :status', {
+              status: ORM.MessageStatus.read,
             })
             .execute()
           break

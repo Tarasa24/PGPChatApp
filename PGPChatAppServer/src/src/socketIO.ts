@@ -197,10 +197,14 @@ export default function (io: Server) {
           action: 'SET_STATUS_SENT',
           messageId: data.id,
           to: data.from,
+          timestamp: now,
         } as MessageUpdatePayload)
 
         //Send notification
-        await sendNotification(data.to)
+        await sendNotification(data.to, {
+          COMMAND: 'NEW_MESSAGE',
+          PAYLOAD: { id: data.id, recievedNotificationTo: data.from },
+        })
       } catch (error) {
         console.error(error)
       }
@@ -219,7 +223,10 @@ export default function (io: Server) {
             },
           })
           // Resend notification with updated queue length
-          await sendNotification(data.to)
+          await sendNotification(data.to, {
+            COMMAND: 'NEW_MESSAGE',
+            PAYLOAD: { id: null },
+          })
         }
 
         const now = Date.now()
