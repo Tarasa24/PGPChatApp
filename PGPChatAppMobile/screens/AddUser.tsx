@@ -33,13 +33,9 @@ function AddUser(props: Props) {
 
     try {
       // Fetch from server
-      const res = await fetchRest('/keyserver/lookup/' + id, {
-        headers: {
-          'Accept-Encoding': 'application/json',
-        },
-      })
+      const res = await fetchRest('/keyserver/lookup/' + id)
 
-      switch (res.status) {
+      switch (res.info().status) {
         case 200:
           // All normal
           break
@@ -101,8 +97,7 @@ function AddUser(props: Props) {
           minHeight: '100%',
           marginHorizontal: 20,
           justifyContent: 'center',
-        }}
-      >
+        }}>
         <TextInput
           style={styles.input}
           placeholder="ChatApp Adress"

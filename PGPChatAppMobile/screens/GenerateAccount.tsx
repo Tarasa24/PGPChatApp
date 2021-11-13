@@ -74,7 +74,7 @@ export function GenerateAccount(props: Props) {
 
       fetchRest('/keyserver/check/' + derivedID)
         .then((res) => {
-          switch (res.status) {
+          switch (res.info().status) {
             case 200:
               setStage(Stage.Success)
               Clipboard.setString(derivedID)
@@ -108,7 +108,7 @@ export function GenerateAccount(props: Props) {
               Toast.show({
                 type: 'error',
                 position: 'bottom',
-                text1: 'Server returned code ' + res.status,
+                text1: 'Server returned code ' + res.info().status,
                 autoHide: false,
               })
               break
@@ -154,18 +154,12 @@ export function GenerateAccount(props: Props) {
               onPress={async () => {
                 try {
                   // Send to keyserver
-                  const res = await fetchRest('/keyserver/create', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      id: localUserScoped.id,
-                      publicKey: localUserScoped.publicKey,
-                    }),
+                  const res = await fetchRest('/keyserver/create', 'POST', {
+                    id: localUserScoped.id,
+                    publicKey: localUserScoped.publicKey,
                   })
 
-                  switch (res.status) {
+                  switch (res.info().status) {
                     case 201:
                       // All normal
                       break
@@ -178,7 +172,7 @@ export function GenerateAccount(props: Props) {
                     case 500:
                       throw JSON.stringify(await res.json())
                     default:
-                      throw 'Unexpected response from the server ' + res.status
+                      throw 'Unexpected response from the server ' + res.info().status
                   }
 
                   // Save to async sotrage as generic user + save to redux

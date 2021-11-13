@@ -155,11 +155,7 @@ async function connect() {
     // Check if incoming user already exists in the device DB
     if ((await userRepository.count({ id: payload.from })) === 0) {
       try {
-        const res = await fetchRest('/keyserver/lookup/' + payload.from, {
-          headers: {
-            'Accept-Encoding': 'application/json',
-          },
-        })
+        const res = await fetchRest('/keyserver/lookup/' + payload.from)
 
         const sender = (await res.json()) as ORM.User
 

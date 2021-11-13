@@ -71,8 +71,7 @@ export function ImportPK(props: Props) {
           style={{
             alignItems: 'center',
             marginHorizontal: 20,
-          }}
-        >
+          }}>
           <TextInput
             style={{
               marginVertical: 10,
@@ -97,14 +96,12 @@ export function ImportPK(props: Props) {
             marginTop: 10,
             marginHorizontal: 20,
             alignSelf: 'center',
-          }}
-        >
+          }}>
           <View
             style={{
               alignItems: 'center',
               marginRight: '20%',
-            }}
-          >
+            }}>
             <Text style={{ color: theme.colors.text }}>PK format:</Text>
             <Text style={{ color: theme.colors.text }}>ID format:</Text>
             <Text style={{ color: theme.colors.text }}>PK and ID validated:</Text>
@@ -142,28 +139,22 @@ export function ImportPK(props: Props) {
               if (validPK !== PKValididty.Valid) {
                 setValidPK(PKValididty.Validiting)
                 const res1 = await fetchRest('/keyserver/lookup/' + ID)
-                switch (res1.status) {
+                switch (res1.info().status) {
                   case 200:
                     const res1Body = await res1.json()
                     setPub(res1Body.publicKey)
                     const nonce = await fetchRest('/keyserver/getNonce/' + ID)
-                    const res2 = await fetchRest('/keyserver/validateSignature', {
-                      method: 'POST',
-                      headers: {
-                        'Content-Type': 'application/json',
-                      },
-                      body: JSON.stringify({
-                        id: ID,
-                        signature: await OpenPGP.sign(
-                          await nonce.text(),
-                          res1Body.publicKey,
-                          props.route.params.pk,
-                          ''
-                        ),
-                      }),
+                    const res2 = await fetchRest('/keyserver/validateSignature', 'POST', {
+                      id: ID,
+                      signature: await OpenPGP.sign(
+                        await nonce.text(),
+                        res1Body.publicKey,
+                        props.route.params.pk,
+                        ''
+                      ),
                     })
 
-                    switch (res2.status) {
+                    switch (res2.info().status) {
                       case 200:
                         setValidPK(PKValididty.Valid)
                         return
@@ -209,14 +200,12 @@ export function ImportPK(props: Props) {
                 // Restart app
                 RNRestart.Restart()
               }
-            }}
-          >
+            }}>
             <Text
               style={{
                 textAlign: 'center',
                 color: 'white',
-              }}
-            >
+              }}>
               {validPK === PKValididty.Valid
                 ? 'IMPORT'
                 : 'Validate against the Keyserver'}

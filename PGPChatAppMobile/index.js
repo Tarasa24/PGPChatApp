@@ -36,21 +36,15 @@ PushNotification.configure({
         '/keyserver/getNonce/' + store.getState().localUserReducer.id
       )
 
-      await fetchRest('/notifications/registerToken', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          id: store.getState().localUserReducer.id,
-          signature: await OpenPGP.sign(
-            await nonce.text(),
-            store.getState().localUserReducer.publicKey,
-            store.getState().localUserReducer.privateKey,
-            ''
-          ),
-          token: token.token,
-        }),
+      await fetchRest('/notifications/registerToken', 'PUT', {
+        id: store.getState().localUserReducer.id,
+        signature: await OpenPGP.sign(
+          await nonce.text(),
+          store.getState().localUserReducer.publicKey,
+          store.getState().localUserReducer.privateKey,
+          ''
+        ),
+        token: token.token,
       })
     }
   },
@@ -99,23 +93,17 @@ RNCallKeep.addEventListener('answerCall', async ({ callUUID: callerID }) => {
   const nonce = await fetchRest(
     '/keyserver/getNonce/' + store.getState().localUserReducer.id
   )
-  const res = await fetchRest('/call/', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      id: store.getState().localUserReducer.id,
-      signature: await OpenPGP.sign(
-        await nonce.text(),
-        store.getState().localUserReducer.publicKey,
-        store.getState().localUserReducer.privateKey,
-        ''
-      ),
-    }),
+  const res = await fetchRest('/call/accept', 'POST', {
+    id: store.getState().localUserReducer.id,
+    signature: await OpenPGP.sign(
+      await nonce.text(),
+      store.getState().localUserReducer.publicKey,
+      store.getState().localUserReducer.privateKey,
+      ''
+    ),
   })
 
-  if ([200, 202].includes(res.status)) {
+  if ([200, 202].includes(res.info().status)) {
     RNCallKeep.backToForeground()
   }
   RNCallKeep.reportEndCallWithUUID(callerID, 1)
@@ -125,20 +113,15 @@ RNCallKeep.addEventListener('endCall', async ({ callUUID: callerID }) => {
   const nonce = await fetchRest(
     '/keyserver/getNonce/' + store.getState().localUserReducer.id
   )
-  await fetchRest('/call/', {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      id: store.getState().localUserReducer.id,
-      signature: await OpenPGP.sign(
-        await nonce.text(),
-        store.getState().localUserReducer.publicKey,
-        store.getState().localUserReducer.privateKey,
-        ''
-      ),
-    }),
+
+  const res = await fetchRest('/call/end', 'POST', {
+    id: store.getState().localUserReducer.id,
+    signature: await OpenPGP.sign(
+      await nonce.text(),
+      store.getState().localUserReducer.publicKey,
+      store.getState().localUserReducer.privateKey,
+      ''
+    ),
   })
 })
 
