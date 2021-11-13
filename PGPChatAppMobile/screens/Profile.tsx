@@ -7,7 +7,7 @@ import { useTheme } from '../components/ThemeContext'
 import Clipboard from '@react-native-clipboard/clipboard'
 import Icon from 'react-native-ionicons'
 import Toast from 'react-native-toast-message'
-import DocumentPicker, { MimeType } from 'react-native-document-picker'
+import DocumentPicker from 'react-native-document-picker'
 import { File, User } from '../assets/ts/orm'
 
 import * as RNFS from 'react-native-fs'
@@ -66,7 +66,7 @@ export function Profile(props: Props) {
     if (localUser.picture) await fileRepository.remove(localUser.picture)
   }
 
-  async function saveImageToDB(uri: string, mime: MimeType, name: string) {
+  async function saveImageToDB(uri: string, mime: string, name: string) {
     const userRepository = getRepository(User)
     const fileRepository = getRepository(File)
 
@@ -108,10 +108,11 @@ export function Profile(props: Props) {
 
   async function selectImage() {
     try {
-      const res = await DocumentPicker.pick({
+      const res = await DocumentPicker.pickSingle({
         type: [DocumentPicker.types.images],
       })
-      saveImageToDB(res.uri, res.type as MimeType, res.name)
+
+      saveImageToDB(res.uri, res.type, res.name)
     } catch (err) {
       if (!DocumentPicker.isCancel(err)) throw err
     }
@@ -326,7 +327,7 @@ export function Profile(props: Props) {
                 onPress={() => {
                   Alert.alert(
                     'Are you sure you want to proceed?',
-                    'Exporting the private key will make it accessible to any application given enough permission, which will inevitably lower the overal security. The only time you should be exporting the private key is to switch devices.',
+                    'Exporting the private key will make it accessible to any application given enough permission, which will inevitably lower the overal security. The only time you should be exporting the private key is in order to switch devices.',
                     [
                       {
                         text: 'Abort',

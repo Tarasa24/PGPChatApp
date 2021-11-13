@@ -94,7 +94,7 @@ export function LandingPage(props) {
             borderRadius: 10,
           }}
           onPress={async () => {
-            const res = await DocumentPicker.pick({
+            const res = await DocumentPicker.pickSingle({
               type: [DocumentPicker.types.plainText],
             })
 

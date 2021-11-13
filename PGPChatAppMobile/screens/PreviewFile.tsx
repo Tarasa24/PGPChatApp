@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import { View, Text, Image, Dimensions } from 'react-native'
-import { MimeType } from 'react-native-document-picker'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-ionicons'
 import { getRepository } from 'typeorm'
@@ -10,7 +9,7 @@ import FileViewer from 'react-native-file-viewer'
 
 export interface PreviewFileType {
   renderable: boolean
-  mime: MimeType
+  mime: string
   b64: string
   linkUri?: string
   uri: string

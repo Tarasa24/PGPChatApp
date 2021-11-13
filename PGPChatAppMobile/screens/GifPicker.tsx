@@ -4,7 +4,6 @@ import { useTheme } from '../components/ThemeContext'
 import { connect } from 'react-redux'
 import { InlineFile } from './Chat'
 import * as pickedGifReducer from '../store/reducers/pickedGifReducer'
-import { MimeType } from 'react-native-document-picker'
 import RNFetchBlob from 'rn-fetch-blob'
 import { useNavigation } from '@react-navigation/native'
 
@@ -29,7 +28,7 @@ function GifPicker(props: {
 
         props.setPickedGif({
           renderable: true,
-          mime: 'image/gif' as MimeType,
+          mime: 'image/gif',
           b64: b64,
           name: 'GIF.gif',
           uri: res.path(),

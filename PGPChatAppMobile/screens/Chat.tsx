@@ -36,7 +36,7 @@ import { socket, SendPayload, MessageUpdatePayload } from '../assets/ts/socketio
 import OpenPGP from 'react-native-fast-openpgp'
 import * as messageUpdatesListReducer from '../store/reducers/messageUpdatesListReducer'
 import * as RNFS from 'react-native-fs'
-import DocumentPicker, { MimeType } from 'react-native-document-picker'
+import DocumentPicker from 'react-native-document-picker'
 import Video from 'react-native-video'
 import RNFetchBlob from 'rn-fetch-blob'
 import * as Compressor from 'react-native-compressor'
@@ -62,7 +62,7 @@ interface Props {
 
 export interface InlineFile {
   renderable: boolean
-  mime: MimeType
+  mime: string
   b64: string
   linkUri?: string
   uri: string
@@ -664,7 +664,7 @@ function Chat(props: Props) {
 
                       out.push({
                         uri: file.uri,
-                        mime: file.type as MimeType,
+                        mime: file.type,
                         b64: compressed_b64,
                         name: file.name,
                         renderable: true,
@@ -759,7 +759,7 @@ function Chat(props: Props) {
 
                       out.push({
                         uri: file.uri,
-                        mime: file.type as MimeType,
+                        mime: file.type,
                         b64: null,
                         name: file.name,
                         renderable: false,

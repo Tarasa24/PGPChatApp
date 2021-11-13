@@ -97,7 +97,8 @@ function AddUser(props: Props) {
           minHeight: '100%',
           marginHorizontal: 20,
           justifyContent: 'center',
-        }}>
+        }}
+      >
         <TextInput
           style={styles.input}
           placeholder="ChatApp Adress"

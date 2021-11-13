@@ -154,7 +154,7 @@ export default function Call(props: Props) {
     host: __DEV__
       ? DeviceInfo.isEmulatorSync()
         ? '10.0.2.2'
-        : '192.168.1.82'
+        : 'localhost'
       : 'chatapp.tarasa24.dev',
     port: __DEV__ ? 5000 : 443,
     secure: !__DEV__,

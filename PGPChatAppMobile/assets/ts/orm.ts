@@ -1,6 +1,5 @@
 import 'reflect-metadata'
 
-import { MimeType } from 'react-native-document-picker'
 import {
   Column,
   createConnection,
@@ -19,7 +18,7 @@ export class File {
   @PrimaryGeneratedColumn('uuid') id: string
   @Column('text', { nullable: true })
   linkUri: string
-  @Column('text') mime: MimeType
+  @Column('text') mime: string
   @Column('text') uri: string
   @Column('text') name: string
   @Column('text', {
@@ -88,7 +87,7 @@ export interface sendMessageContent {
     linkUri?: string
     base64?: string
     name: string
-    mime: MimeType
+    mime: string
     renderable: boolean
   }[]
 }
