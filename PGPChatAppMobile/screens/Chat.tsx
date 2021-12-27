@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { PureComponent, useEffect, useRef, useState } from 'react'
 import {
   View,
   TextInput,
@@ -15,6 +15,7 @@ import {
   Alert,
   ToastAndroid,
   RefreshControl,
+  FlatList,
 } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-ionicons'
@@ -70,12 +71,58 @@ export interface InlineFile {
   name: string
 }
 
+class ListItem extends PureComponent<{
+  nextMessageTimestamp: number | null
+  m: MessageRaw
+  addToMessageUpdateList: (string) => void
+  otherId: string
+}> {
+  render() {
+    const locale =
+      Platform.OS === 'ios'
+        ? NativeModules.SettingsManager.settings.AppleLocale
+        : NativeModules.I18nManager.localeIdentifier
+    return (
+      <View>
+        {this.props.nextMessageTimestamp !== null &&
+          new Date(this.props.m.timestamp).toDateString() !==
+            new Date(this.props.nextMessageTimestamp).toDateString() && (
+            <Text style={{ textAlign: 'center', color: 'gray', marginTop: 5 }}>
+              {new Date(this.props.nextMessageTimestamp).toLocaleDateString(locale)}{' '}
+            </Text>
+          )}
+        <ChatBubble
+          message={this.props.m as any}
+          onDelete={async (messageID) => {
+            const messageRepository = getRepository(Message)
+            await messageRepository.update(
+              { id: messageID },
+              { status: MessageStatus.deleted, text: '' }
+            )
+
+            const fileRepository = getRepository(File)
+            await fileRepository.delete({
+              parentMessage: await messageRepository.findOne(messageID),
+            })
+
+            socket.emit('messageUpdate', {
+              action: 'DELETE',
+              messageId: messageID,
+              to: this.props.otherId,
+            } as MessageUpdatePayload & { to: string })
+
+            this.props.addToMessageUpdateList(messageID)
+          }}
+        />
+      </View>
+    )
+  }
+}
+
 function Chat(props: Props) {
   const navigation = useNavigation()
   const theme = useTheme()
   const inputRef = useRef<TextInput>()
-  const [scrollViewRef, setScrollViewRef]: [ScrollView, (ref: ScrollView) => void] =
-    useState(null)
 
   enum Stages {
     Loading,
@@ -88,26 +135,12 @@ function Chat(props: Props) {
 
   const [addFileMenuOpened, setAddFileMenuOpened] = useState(false)
 
-  const [userHasScrolled, setUserHasScrolled] = useState(false)
-  const [scrollViewHeight, setScrollViewHeight] = useState(0)
-
   useEffect(() => {
     if (Object.keys(props.pickedGif).length != 0) {
       setInlineFiles([...inlineFiles, props.pickedGif])
       props.dropPickedGif()
     }
   }, [props.pickedGif])
-
-  function shouldScrollDown() {
-    return scrollViewRef && !userHasScrolled
-  }
-
-  function handleScroll(e) {
-    setUserHasScrolled(
-      e.nativeEvent.layoutMeasurement.height + e.nativeEvent.contentOffset.y + 20 <
-        e.nativeEvent.contentSize.height
-    )
-  }
 
   async function loadMessages(youngerThan = null) {
     const messageRepository = getRepository(Message)
@@ -176,16 +209,6 @@ function Chat(props: Props) {
       header: () => <ChatHeader user={props.route.params.participants.other} />,
     })
   }, [])
-
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
-      setAddFileMenuOpened(false)
-      if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: false })
-    })
-    return () => {
-      keyboardDidShowListener.remove()
-    }
-  }, [scrollViewRef])
 
   useEffect(() => {
     loadMessages().then(() => {
@@ -346,106 +369,43 @@ function Chat(props: Props) {
   }
 
   function chatBubbles() {
-    function generateArray(messages: MessageRaw[]) {
-      const locale =
-        Platform.OS === 'ios'
-          ? NativeModules.SettingsManager.settings.AppleLocale
-          : NativeModules.I18nManager.localeIdentifier
-
-      const out = []
-      for (let i = 0; i < messages.length; i++) {
-        const m = messages[i]
-
-        out.push(
-          <ChatBubble
-            message={m as any}
-            key={m.id}
-            onDelete={async (messageID) => {
-              const messageRepository = getRepository(Message)
-              await messageRepository.update(
-                { id: messageID },
-                { status: MessageStatus.deleted, text: '' }
-              )
-
-              const fileRepository = getRepository(File)
-              await fileRepository.delete({
-                parentMessage: await messageRepository.findOne(messageID),
-              })
-
-              socket.emit('messageUpdate', {
-                action: 'DELETE',
-                messageId: messageID,
-                to: props.route.params.participants.other.id,
-              } as MessageUpdatePayload & { to: string })
-
-              props.addToMessageUpdateList(messageID)
-            }}
-          />
-        )
-
-        if (
-          i + 1 !== messages.length &&
-          new Date(messages[i].timestamp).toDateString() !==
-            new Date(messages[i + 1].timestamp).toDateString()
-        ) {
-          out.push(
-            <Text style={{ textAlign: 'center', color: 'gray', marginTop: 5 }} key={i}>
-              {new Date(messages[i + 1].timestamp).toLocaleDateString(locale)}
-            </Text>
-          )
-        }
-      }
-
-      return out
+    function generate({ item, index }) {
+      return (
+        <ListItem
+          m={item}
+          nextMessageTimestamp={
+            messages[index + 1] ? messages[index + 1].timestamp : null
+          }
+          addToMessageUpdateList={props.addToMessageUpdateList}
+          otherId={props.route.params.participants.other.id}
+        />
+      )
     }
 
-    if (stage === Stages.Loading)
-      return (
-        <View style={{ flexGrow: 1, justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      )
-    else
-      return (
-        <ScrollView
-          refreshControl={
-            <RefreshControl
-              refreshing={false}
-              colors={[theme.colors.primary]}
-              progressBackgroundColor={lightenDarkenColor(theme.colors.background, 50)}
-              onRefresh={() => {
-                //setStage(Stages.Loading)
-                loadMessages(messages[messages.length - 1].timestamp)
-              }}
-            />
-          }
-          ref={(ref) => {
-            setScrollViewRef(ref)
-          }}
-          onScroll={handleScroll}
-          scrollEventThrottle={400}
-          onContentSizeChange={(_, y) => {
-            if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: true })
-            else scrollViewRef.scrollTo({ y: y - scrollViewHeight - 75, animated: true })
-            setScrollViewHeight(y)
-          }}>
-          <View
-            style={{
-              flexGrow: 1,
-              flexDirection: 'column-reverse',
-              paddingBottom: 5,
-            }}>
-            {generateArray(messages)}
-          </View>
-        </ScrollView>
-      )
+    return (
+      <FlatList
+        inverted={true}
+        data={messages}
+        renderItem={generate}
+        keyExtractor={(item) => item.id}
+        onEndReached={() => {
+          setStage(Stages.Loading)
+          loadMessages(messages[messages.length - 1].timestamp)
+        }}
+        ListFooterComponent={
+          stage === Stages.Loading && (
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+          )
+        }
+        ListFooterComponentStyle={{
+          flexGrow: 1,
+          paddingTop: stage === Stages.Loading ? 10 : 0,
+        }}
+      />
+    )
   }
 
   const [inlineFiles, setInlineFiles] = useState([] as InlineFile[])
-
-  useEffect(() => {
-    if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: false })
-  }, [inlineFiles, addFileMenuOpened])
 
   function showInlineFiles() {
     function evalFile(file: InlineFile) {
@@ -549,36 +509,6 @@ function Chat(props: Props) {
         flex: 1,
         backgroundColor: theme.colors.background,
       }}>
-      {userHasScrolled && (
-        <View
-          style={{
-            position: 'absolute',
-            right: 10,
-            top: 10,
-            zIndex: 9,
-          }}>
-          <TouchableOpacity
-            activeOpacity={0.7}
-            style={{
-              backgroundColor: lightenDarkenColor(
-                theme.colors.background,
-                20 * (theme.dark ? 1 : -1)
-              ),
-              height: 50,
-              width: 50,
-              justifyContent: 'center',
-              alignItems: 'center',
-              borderRadius: 100,
-              borderColor: theme.colors.border,
-              borderWidth: 1,
-            }}
-            onPress={() => {
-              scrollViewRef.scrollToEnd()
-            }}>
-            <Icon name="arrow-round-down" color={theme.colors.text} />
-          </TouchableOpacity>
-        </View>
-      )}
       {chatBubbles()}
 
       <View
