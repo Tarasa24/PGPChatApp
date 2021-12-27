@@ -51,7 +51,11 @@ export default function Gallery(props: Props) {
       else {
         for (let i = 0; i < f.length; i++) {
           if (f[i].renderable) {
-            f[i].b64 = await RNFS.readFile(f[i].uri, 'base64')
+            try {
+              f[i].b64 = await RNFS.readFile(f[i].uri, 'base64')
+            } catch (error) {
+              f[i].b64 = null
+            }
           }
         }
 
@@ -77,14 +81,20 @@ export default function Gallery(props: Props) {
               activeOpacity={0.7}
               onPress={() => {
                 navigation.navigate('PreviewFile', { file: file })
-              }}
-            >
-              <Image
-                style={{ height: 200, width: '100%' }}
-                source={{
-                  uri: `data:${file.mime};base64,${file.b64}`,
-                }}
-              />
+              }}>
+              {file.b64 !== null ? (
+                <Image
+                  style={{ height: 200, width: '100%' }}
+                  source={{
+                    uri: `data:${file.mime};base64,${file.b64}`,
+                  }}
+                />
+              ) : (
+                <View
+                  style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
+                  <Icon name="document" size={60} color={theme.colors.primary} />
+                </View>
+              )}
             </TouchableOpacity>
           </View>
         )
@@ -97,22 +107,19 @@ export default function Gallery(props: Props) {
               width: '50%',
               justifyContent: 'center',
               alignItems: 'center',
-            }}
-          >
+            }}>
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
                 navigation.navigate('PreviewFile', { file: file })
-              }}
-            >
+              }}>
               <View
                 style={{
                   justifyContent: 'center',
                   alignItems: 'center',
                   minWidth: '100%',
                   minHeight: '100%',
-                }}
-              >
+                }}>
                 <Icon name="document" size={64} color={theme.colors.text} />
                 <Text style={{ color: theme.colors.text }}>{file.name}</Text>
               </View>
