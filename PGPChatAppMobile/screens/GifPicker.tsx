@@ -6,6 +6,8 @@ import { InlineFile } from './Chat'
 import * as pickedGifReducer from '../store/reducers/pickedGifReducer'
 import RNFetchBlob from 'rn-fetch-blob'
 import { useNavigation } from '@react-navigation/native'
+// @ts-expect-error
+import { poweredByGiphyLogoWhite, poweredByGiphyLogoGrey } from 'react-native-gif-search'
 
 function GifPicker(props: {
   setPickedGif: (file: InlineFile) => void
@@ -20,6 +22,8 @@ function GifPicker(props: {
 
   return (
     <RNGS.GifSearch
+      provider="GIPHY"
+      providerLogo={theme.dark ? poweredByGiphyLogoWhite : poweredByGiphyLogoGrey}
       giphyApiKey="DdxRaoNeGEsvnhOajVeC1MQGaAZTCYd9"
       onGifSelected={async (url, obj) => {
         const res = await RNFetchBlob.config({ fileCache: true }).fetch('GET', url)
