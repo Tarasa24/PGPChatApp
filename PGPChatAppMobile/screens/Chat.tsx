@@ -14,6 +14,7 @@ import {
   Image,
   Alert,
   ToastAndroid,
+  RefreshControl,
 } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-ionicons'
@@ -29,7 +30,7 @@ import {
 import ChatHeader from '../components/ChatHeader'
 import { useTheme } from '../components/ThemeContext'
 import ChatBubble from '../components/ChatBubble'
-import { getRepository } from 'typeorm'
+import { getRepository, IsNull } from 'typeorm'
 import { LocalUserState } from '../store/reducers/localUserReducer'
 import { connect } from 'react-redux'
 import { socket, SendPayload, MessageUpdatePayload } from '../assets/ts/socketio'
@@ -87,6 +88,9 @@ function Chat(props: Props) {
 
   const [addFileMenuOpened, setAddFileMenuOpened] = useState(false)
 
+  const [userHasScrolled, setUserHasScrolled] = useState(false)
+  const [scrollViewHeight, setScrollViewHeight] = useState(0)
+
   useEffect(() => {
     if (Object.keys(props.pickedGif).length != 0) {
       setInlineFiles([...inlineFiles, props.pickedGif])
@@ -95,33 +99,49 @@ function Chat(props: Props) {
   }, [props.pickedGif])
 
   function shouldScrollDown() {
-    if (scrollViewRef) return true
-    else return false
+    return scrollViewRef && !userHasScrolled
   }
 
-  async function loadMessages() {
+  function handleScroll(e) {
+    setUserHasScrolled(
+      e.nativeEvent.layoutMeasurement.height + e.nativeEvent.contentOffset.y + 20 <
+        e.nativeEvent.contentSize.height
+    )
+  }
+
+  async function loadMessages(youngerThan = null) {
     const messageRepository = getRepository(Message)
 
-    const messages = await messageRepository
+    const newMessages = await messageRepository
       .createQueryBuilder()
       .where(
-        `(message.recipientId = '${props.route.params.participants.self.id}' AND message.authorId = '${props.route.params.participants.other.id}')`
+        `(message.recipientId = '${
+          props.route.params.participants.self.id
+        }' AND message.authorId = '${props.route.params.participants.other.id}' AND ${
+          youngerThan === null ? '1' : `(message.timestamp < ${youngerThan})`
+        })`
       )
       .orWhere(
-        `(message.recipientId = '${props.route.params.participants.other.id}' AND message.authorId = '${props.route.params.participants.self.id}')`
+        `(message.recipientId = '${
+          props.route.params.participants.other.id
+        }' AND message.authorId = '${props.route.params.participants.self.id}' AND ${
+          youngerThan === null ? '1' : `(message.timestamp < ${youngerThan})`
+        })`
       )
       .select(['id', 'timestamp', 'text', 'authorId AS author', 'status'])
       .orderBy('timestamp', 'DESC')
+      .limit(25)
       .getRawMany()
 
     const fileRepository = getRepository(File)
-    for (let i = 0; i < messages.length; i++) {
-      messages[i].files = await fileRepository.find({
-        where: { parentMessage: messages[i] },
+    for (let i = 0; i < newMessages.length; i++) {
+      newMessages[i].files = await fileRepository.find({
+        where: { parentMessage: newMessages[i] },
       })
     }
 
-    setMessages(messages)
+    if (youngerThan === null) setMessages(newMessages)
+    else setMessages([...messages, ...newMessages])
     setStage(Stages.Loaded)
   }
 
@@ -301,8 +321,7 @@ function Chat(props: Props) {
           }}
           onPress={() => {
             sendMessage()
-          }}
-        >
+          }}>
           <Icon color="white" name="send" />
         </TouchableOpacity>
       )
@@ -320,8 +339,7 @@ function Chat(props: Props) {
           onPress={() => {
             Keyboard.dismiss()
             setAddFileMenuOpened(!addFileMenuOpened)
-          }}
-        >
+          }}>
           <Icon color="white" name="add" />
         </TouchableOpacity>
       )
@@ -390,20 +408,33 @@ function Chat(props: Props) {
     else
       return (
         <ScrollView
+          refreshControl={
+            <RefreshControl
+              refreshing={false}
+              colors={[theme.colors.primary]}
+              progressBackgroundColor={lightenDarkenColor(theme.colors.background, 50)}
+              onRefresh={() => {
+                //setStage(Stages.Loading)
+                loadMessages(messages[messages.length - 1].timestamp)
+              }}
+            />
+          }
           ref={(ref) => {
             setScrollViewRef(ref)
           }}
-          onContentSizeChange={() => {
-            if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: false })
-          }}
-        >
+          onScroll={handleScroll}
+          scrollEventThrottle={400}
+          onContentSizeChange={(_, y) => {
+            if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: true })
+            else scrollViewRef.scrollTo({ y: y - scrollViewHeight - 75, animated: true })
+            setScrollViewHeight(y)
+          }}>
           <View
             style={{
               flexGrow: 1,
               flexDirection: 'column-reverse',
               paddingBottom: 5,
-            }}
-          >
+            }}>
             {generateArray(messages)}
           </View>
         </ScrollView>
@@ -426,8 +457,7 @@ function Chat(props: Props) {
               width: 64,
               justifyContent: 'center',
               alignItems: 'center',
-            }}
-          >
+            }}>
             <Icon name="document" size={32} color={theme.colors.text} />
             <Text style={{ color: theme.colors.text, fontSize: 10 }} numberOfLines={1}>
               {file.name}
@@ -467,8 +497,7 @@ function Chat(props: Props) {
               borderRadius: 10,
               overflow: 'hidden',
               marginHorizontal: 5,
-            }}
-          >
+            }}>
             <View
               style={{
                 position: 'absolute',
@@ -481,8 +510,7 @@ function Chat(props: Props) {
                 backgroundColor: theme.colors.primary,
                 justifyContent: 'center',
                 alignItems: 'center',
-              }}
-            >
+              }}>
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => {
@@ -490,8 +518,7 @@ function Chat(props: Props) {
                     ...inlineFiles.slice(0, index),
                     ...inlineFiles.slice(index + 1),
                   ])
-                }}
-              >
+                }}>
                 <Icon name="close" size={20} color="white" />
               </TouchableOpacity>
             </View>
@@ -507,8 +534,7 @@ function Chat(props: Props) {
           flexDirection: 'row',
           alignItems: 'center',
           marginBottom: 5,
-        }}
-      >
+        }}>
         {out}
         {!addFileMenuOpened ? (
           <View style={{ paddingHorizontal: 15 }}>{sendAddButton(true)}</View>
@@ -522,16 +548,44 @@ function Chat(props: Props) {
       style={{
         flex: 1,
         backgroundColor: theme.colors.background,
-      }}
-    >
+      }}>
+      {userHasScrolled && (
+        <View
+          style={{
+            position: 'absolute',
+            right: 10,
+            top: 10,
+            zIndex: 9,
+          }}>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            style={{
+              backgroundColor: lightenDarkenColor(
+                theme.colors.background,
+                20 * (theme.dark ? 1 : -1)
+              ),
+              height: 50,
+              width: 50,
+              justifyContent: 'center',
+              alignItems: 'center',
+              borderRadius: 100,
+              borderColor: theme.colors.border,
+              borderWidth: 1,
+            }}
+            onPress={() => {
+              scrollViewRef.scrollToEnd()
+            }}>
+            <Icon name="arrow-round-down" color={theme.colors.text} />
+          </TouchableOpacity>
+        </View>
+      )}
       {chatBubbles()}
 
       <View
         style={{
           paddingHorizontal: 5,
           paddingTop: 7.5,
-        }}
-      >
+        }}>
         <ScrollView horizontal={true}>{showInlineFiles()}</ScrollView>
         {inlineFiles.length > 0 && (
           <Text style={{ color: theme.colors.text }}>
@@ -549,8 +603,7 @@ function Chat(props: Props) {
             paddingHorizontal: 5,
             paddingVertical: 7.5,
             alignItems: 'center',
-          }}
-        >
+          }}>
           <TextInput
             ref={inputRef}
             style={{
@@ -675,8 +728,7 @@ function Chat(props: Props) {
                   } catch (err) {
                     if (!DocumentPicker.isCancel(err)) throw err
                   }
-                }}
-              >
+                }}>
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -684,15 +736,13 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}
-                >
+                  }}>
                   <Icon name="photos" size={64} color={theme.colors.text} />
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: theme.colors.text,
-                    }}
-                  >
+                    }}>
                     Gallery
                   </Text>
                 </View>
@@ -700,8 +750,7 @@ function Chat(props: Props) {
 
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => navigation.navigate('GifPicker')}
-              >
+                onPress={() => navigation.navigate('GifPicker')}>
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -709,24 +758,21 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}
-                >
+                  }}>
                   <Text
                     style={{
                       fontWeight: 'bold',
                       color: theme.colors.text,
                       fontSize: 32,
                       lineHeight: 64,
-                    }}
-                  >
+                    }}>
                     GIF
                   </Text>
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: theme.colors.text,
-                    }}
-                  >
+                    }}>
                     GIF
                   </Text>
                 </View>
@@ -770,8 +816,7 @@ function Chat(props: Props) {
                   } catch (err) {
                     if (!DocumentPicker.isCancel(err)) throw err
                   }
-                }}
-              >
+                }}>
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -779,15 +824,13 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}
-                >
+                  }}>
                   <Icon name="document" size={64} color={theme.colors.text} />
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: theme.colors.text,
-                    }}
-                  >
+                    }}>
                     File
                   </Text>
                 </View>
@@ -801,15 +844,13 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}
-                >
+                  }}>
                   <Icon name="time" size={64} color="grey" />
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: 'grey',
-                    }}
-                  >
+                    }}>
                     More to come...
                   </Text>
                 </View>
