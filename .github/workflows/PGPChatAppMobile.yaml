@@ -15,21 +15,11 @@ jobs:
       - name: Use Node.js 14.x
         uses: actions/setup-node@v1
         with:
-          node-version: 14.x
-      - name: Cache node modules
-        uses: actions/cache@v2
-        env:
-          cache-name: node-modules-backend-cache
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('PGPChatAppMobile/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-build-${{ env.cache-name }}-
-            ${{ runner.os }}-build-
-            ${{ runner.os }}-
-      - name: Instal npm packages
-        working-directory: ./PGPChatAppMobile
-        run: npm ci
+          node-version: '14.x'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install
 
       - name: Cache Gradle Wrapper
         uses: actions/cache@v2
