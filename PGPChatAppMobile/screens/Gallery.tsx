@@ -8,6 +8,7 @@ import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-ionicons'
 import { PreviewFileType } from './PreviewFile'
 import { useNavigation } from '@react-navigation/native'
+import Video from 'react-native-video'
 
 export interface RouteParams {
   user: User
@@ -76,23 +77,50 @@ export default function Gallery(props: Props) {
     files.forEach((file, i) => {
       if (file.renderable)
         out.push(
-          <View key={i} style={{ height: 200, width: '50%' }}>
+          <View
+            key={i}
+            style={{
+              height: 200,
+              width: '50%',
+              borderColor: theme.colors.border,
+              borderWidth: 1,
+              padding: 5,
+            }}>
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
                 navigation.navigate('PreviewFile', { file: file })
               }}>
               {file.b64 !== null ? (
-                <Image
-                  style={{ height: 200, width: '100%' }}
-                  source={{
-                    uri: `data:${file.mime};base64,${file.b64}`,
-                  }}
-                />
+                file.name.includes('.mp4') ? (
+                  <Video
+                    style={{ height: 200 - 10, width: '100%' }}
+                    resizeMode={'contain'}
+                    volume={0}
+                    repeat={true}
+                    source={{
+                      uri: file.uri,
+                    }}
+                  />
+                ) : (
+                  <Image
+                    style={{ height: 200 - 10, width: '100%' }}
+                    resizeMode={'contain'}
+                    source={{
+                      uri: `data:${file.mime};base64,${file.b64}`,
+                    }}
+                  />
+                )
               ) : (
                 <View
                   style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
                   <Icon name="document" size={60} color={theme.colors.primary} />
+                  <Text
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                    style={{ marginHorizontal: 10, marginTop: 15 }}>
+                    {file.name}
+                  </Text>
                 </View>
               )}
             </TouchableOpacity>
