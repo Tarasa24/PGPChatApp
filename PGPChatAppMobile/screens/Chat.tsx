@@ -208,6 +208,10 @@ function Chat(props: Props) {
     navigation.setOptions({
       header: () => <ChatHeader user={props.route.params.participants.other} />,
     })
+
+    loadMessages().then(() => {
+      sendReadStatus()
+    })
   }, [])
 
   useEffect(() => {
