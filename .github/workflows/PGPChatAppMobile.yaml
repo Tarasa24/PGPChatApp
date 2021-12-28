@@ -17,8 +17,10 @@ jobs:
         with:
           node-version: '14.x'
           cache: 'yarn'
+          cache-dependency-path: './PGPChatAppMobile/package-lock.json'
 
       - name: Install dependencies
+        working-directory: ./PGPChatAppMobile
         run: yarn install
 
       - name: Cache Gradle Wrapper
