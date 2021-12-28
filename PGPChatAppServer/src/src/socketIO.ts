@@ -22,14 +22,14 @@ import Sequelize from 'sequelize'
 import chalk from 'chalk'
 
 /**
-  * Map storing userID as key and socketID as its value
-  * @returns socketID
-*/
+ * Map storing userID as key and socketID as its value
+ * @returns socketID
+ */
 export let userSocketMap: UserSocket = {}
 /**
-  * Map storing socketID as key and userID as its value
-  * @returns userID
-*/
+ * Map storing socketID as key and userID as its value
+ * @returns userID
+ */
 export let socketUserMap: SocketUser = {}
 
 function addUser(userID: UserID, socketID: SocketID) {
@@ -69,7 +69,7 @@ function checkLogin(socket: Socket) {
   } else return
 }
 
-export default function(io: Server) {
+export default function (io: Server) {
   io.on('connection', (socket: Socket) => {
     // Workaround for users not logging in upon connect or reconnect (I have no idea why it doesn't work)
     socket.emit('requestLogin', {})
@@ -79,7 +79,7 @@ export default function(io: Server) {
         if (!data.userID || !data.signature) throw 'Invalid payload'
 
         // Verify the signature
-        if (!await verifyNonceSignature(data.userID, data.signature))
+        if (!(await verifyNonceSignature(data.userID, data.signature)))
           throw 'Invalid signature'
 
         // Add user to in-memory dictionary of userIDs and socketIDs (this works only with single instance of server)
@@ -169,9 +169,10 @@ export default function(io: Server) {
 
         // Emit payload to socket
         if (userSocketMap[data.to])
-          io
-            .to(userSocketMap[data.to])
-            .emit('recieve', { ...data, timestamp: now } as SendPayload)
+          io.to(userSocketMap[data.to]).emit('recieve', {
+            ...data,
+            timestamp: now,
+          } as SendPayload)
 
         // Add to queue in case the message wasn't recieved
         await MessagesQueue.create({
@@ -196,10 +197,14 @@ export default function(io: Server) {
           action: 'SET_STATUS_SENT',
           messageId: data.id,
           to: data.from,
+          timestamp: now,
         } as MessageUpdatePayload)
 
         //Send notification
-        await sendNotification(data.to)
+        await sendNotification(data.to, {
+          COMMAND: 'NEW_MESSAGE',
+          PAYLOAD: { id: data.id, recievedNotificationTo: data.from },
+        })
       } catch (error) {
         console.error(error)
       }
@@ -218,7 +223,10 @@ export default function(io: Server) {
             },
           })
           // Resend notification with updated queue length
-          await sendNotification(data.to)
+          await sendNotification(data.to, {
+            COMMAND: 'NEW_MESSAGE',
+            PAYLOAD: { id: null },
+          })
         }
 
         const now = Date.now()
@@ -265,8 +273,7 @@ export default function(io: Server) {
       try {
         checkLogin(socket)
 
-        if (![data.caller, data.callee].includes(socketUserMap[socket.id]))
-          return
+        if (![data.caller, data.callee].includes(socketUserMap[socket.id])) return
 
         await OngoingCalls.create({
           caller: data.caller,
@@ -294,8 +301,7 @@ export default function(io: Server) {
       try {
         checkLogin(socket)
 
-        if (![data.caller, data.callee].includes(socketUserMap[socket.id]))
-          return
+        if (![data.caller, data.callee].includes(socketUserMap[socket.id])) return
 
         await OngoingCalls.destroy({
           where: { caller: data.caller, callee: data.callee },
@@ -311,14 +317,15 @@ export default function(io: Server) {
     })
 
     socket.on('disconnect', async () => {
-      await OngoingCalls.destroy({
-        where: {
-          [Sequelize.Op.or]: [
-            { caller: socketUserMap[socket.id] },
-            { callee: socketUserMap[socket.id] },
-          ],
-        },
-      })
+      if (socketUserMap[socket.id])
+        await OngoingCalls.destroy({
+          where: {
+            [Sequelize.Op.or]: [
+              { caller: socketUserMap[socket.id] },
+              { callee: socketUserMap[socket.id] },
+            ],
+          },
+        })
 
       removeUser(socket.id)
     })

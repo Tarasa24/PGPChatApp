@@ -8,6 +8,8 @@ import { fetchRest } from '../assets/ts/api'
 import { User } from '../assets/ts/orm'
 import { useTheme } from '../components/ThemeContext'
 import { LocalUserState } from '../store/reducers/localUserReducer'
+import Waves from '../components/svg/Waves'
+import WavesDark from '../components/svg/Waves-dark'
 
 interface Props {
   localUser: LocalUserState
@@ -31,13 +33,9 @@ function AddUser(props: Props) {
 
     try {
       // Fetch from server
-      const res = await fetchRest('/keyserver/lookup/' + id, {
-        headers: {
-          'Accept-Encoding': 'application/json',
-        },
-      })
+      const res = await fetchRest('/keyserver/lookup/' + id)
 
-      switch (res.status) {
+      switch (res.info().status) {
         case 200:
           // All normal
           break
@@ -57,7 +55,8 @@ function AddUser(props: Props) {
       const user = new User()
       user.id = fetchedUser.id
       user.publicKey = fetchedUser.publicKey
-      await userRepository.insert(user)
+      if ((await userRepository.count({ where: { id: fetchedUser.id } })) === 0)
+        await userRepository.insert(user)
 
       // Navigate to the newly created
       navigation.reset({
@@ -92,6 +91,7 @@ function AddUser(props: Props) {
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
+      {!theme.dark ? <Waves style={styles.waves} /> : <WavesDark style={styles.waves} />}
       <View
         style={{
           minHeight: '100%',
@@ -105,11 +105,7 @@ function AddUser(props: Props) {
           ref={inputRef}
           onChangeText={(change) => setInputState(change)}
         />
-        <Button
-          onPress={() => addUser()}
-          title="Add"
-          color={theme.colors.primary}
-        />
+        <Button onPress={() => addUser()} title="Add" color={theme.colors.primary} />
       </View>
       <Toast ref={(ref) => Toast.setRef(ref)} style={{ zIndex: 2 }} />
     </View>
@@ -133,5 +129,13 @@ const styles = StyleSheet.create({
     borderColor: '#dadada',
     borderWidth: 1,
     borderRadius: 15,
+  },
+  waves: {
+    zIndex: 1,
+    transform: [{ scale: 0.65 }],
+    position: 'absolute',
+    left: -500,
+    top: -85,
+    marginBottom: -80,
   },
 })

@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc",
     "dev": "node ./node_modules/nodemon/bin/nodemon.js --watch \"src/**\" -e ts --exec \"npm run build && npm run start\"",
-    "start": "node ./build/index.js"
+    "start": "node ./build/index.js",
+    "format": "prettier --write ."
   },
   "author": "",
   "license": "ISC",
@@ -34,6 +35,7 @@
     "@types/swagger-jsdoc": "^6.0.0",
     "@types/swagger-ui-express": "^4.1.2",
     "nodemon": "^2.0.7",
+    "prettier": "^2.4.1",
     "sqlite3": "^5.0.2",
     "ts-node": "^9.1.1",
     "tsc": "^1.20150623.0",

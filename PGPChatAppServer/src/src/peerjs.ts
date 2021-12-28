@@ -7,7 +7,10 @@ export default function initPeerServer(peerServer: any) {
     const callExists =
       (await OngoingCalls.count({
         where: {
-          [Sequelize.Op.or]: [{ callerPeerToken: clientID }, { calleePeerToken: clientID }],
+          [Sequelize.Op.or]: [
+            { callerPeerToken: clientID },
+            { calleePeerToken: clientID },
+          ],
         },
       })) === 1
 

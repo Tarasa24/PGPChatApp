@@ -36,14 +36,13 @@ function ChatBubble(props: Props) {
   const [filesb64, setFilesb64] = useState([] as string[])
 
   useEffect(() => {
-    ;(async function() {
+    ;(async function () {
       if (props.message.files.length > 0) {
         const out = []
         for (let i = 0; i < props.message.files.length; i++) {
           const file = props.message.files[i]
           try {
-            if (file.renderable)
-              out.push(await RNFS.readFile(file.uri, 'base64'))
+            if (file.renderable) out.push(await RNFS.readFile(file.uri, 'base64'))
             else out.push(null)
           } catch (error) {
             out.push(null)
@@ -76,8 +75,7 @@ function ChatBubble(props: Props) {
           This message was deleted.
         </Text>
       )
-    else if (text)
-      return <Text style={{ color: theme.colors.text }}>{text}</Text>
+    else if (text) return <Text style={{ color: theme.colors.text }}>{text}</Text>
   }
 
   function showFiles(files: File[]) {
@@ -202,10 +200,7 @@ function ChatBubble(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     )
-                  : lightenDarkenColor(
-                      theme.colors.primary,
-                      55 * (theme.dark ? -1 : 1)
-                    ),
+                  : lightenDarkenColor(theme.colors.primary, 55 * (theme.dark ? -1 : 1)),
                 paddingHorizontal: 15,
                 paddingVertical: 7,
                 borderRadius: 20,
@@ -215,9 +210,7 @@ function ChatBubble(props: Props) {
             >
               <View>
                 {showText(props.message.text, props.message.status)}
-                <View style={{ marginTop: 10 }}>
-                  {showFiles(props.message.files)}
-                </View>
+                <View style={{ marginTop: 10 }}>{showFiles(props.message.files)}</View>
               </View>
 
               <View

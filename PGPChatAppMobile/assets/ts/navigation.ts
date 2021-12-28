@@ -1,9 +1,7 @@
 import { NavigationContainerRef } from '@react-navigation/native'
 import * as React from 'react'
 
-export const navigationRef = React.createRef() as React.Ref<
-  NavigationContainerRef
->
+export const navigationRef = React.createRef() as React.Ref<NavigationContainerRef>
 
 export function navigate(name, params) {
   // @ts-expect-error

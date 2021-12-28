@@ -29,7 +29,6 @@
 		"@fortawesome/free-solid-svg-icons": "^5.15.4",
 		"gsap": "^3.7.1",
 		"svelte-awesome": "^2.3.2",
-		"svelte-hammer": "^0.1.7",
-		"svelte-inline-svg": "^1.0.8"
+		"svelte-hammer": "^0.1.7"
 	}
 }

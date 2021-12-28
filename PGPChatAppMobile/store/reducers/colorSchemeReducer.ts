@@ -8,10 +8,7 @@ const initialState = {
       : Appearance.getColorScheme(),
 }
 
-export default function colorSchemeReducer(
-  state = initialState,
-  action: Action
-) {
+export default function colorSchemeReducer(state = initialState, action: Action) {
   switch (action.type) {
     case 'SET_DARK':
       return {

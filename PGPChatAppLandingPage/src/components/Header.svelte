@@ -1,13 +1,14 @@
 <script lang="ts">
-  import InlineSVG from 'svelte-inline-svg'
   import Waves from '../assets/Waves.svg';
+  import WavesDark from '../assets/Waves-dark.svg'
+  import { theme } from '../store'
 
   import Icon from 'svelte-awesome';
   import { faGithub } from '@fortawesome/free-brands-svg-icons';
 </script>
 
 <header>
-  <div class="bg-primaryLight w-100 flex flex-col z-10 pt-[35vh]">
+  <div class="bg-primaryLight dark:bg-primaryDark w-100 flex flex-col z-10 pt-[35vh]">
     <h1 class="text-center text-white font-bold lg:text-6xl text-4xl mx-2.5 mb-10">Chat Securely Through The Power Of PGP Encryption</h1>
     <h2 class="text-center text-borderLight lg:text-3xl text-2xl font-light mx-2.5 mb-5">Meet <b>PGPChatApp</b>, open-source privacy-first feature-rich experience.</h2>
 
@@ -23,5 +24,5 @@
       </a>
     </div>
   </div>
-  <InlineSVG src={Waves} class="w-[100%] h-[100%]" />
+  <img src={$theme === 'dark' ? WavesDark : Waves} alt="Transition waves" class="w-[100%] h-[100%]" />
 </header>

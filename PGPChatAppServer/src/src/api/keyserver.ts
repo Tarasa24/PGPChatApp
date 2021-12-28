@@ -3,6 +3,7 @@ import CryptoJS from 'crypto-js'
 import bs58 from 'bs58'
 import crypto from 'crypto'
 import { KeyServerEntry, KeyServerEntryType } from '../models.js'
+import { verifyNonceSignature } from '../helperFunctions.js'
 
 const router = express.Router()
 
@@ -226,6 +227,60 @@ router.get('/getNonce/:id', async (req, res) => {
     else {
       const { nonce } = userModel.toJSON() as KeyServerEntryType
       res.status(200).send(nonce.toString())
+    }
+  } catch (error) {
+    res.status(500).json(error)
+  }
+})
+
+/**
+ * @swagger
+ * /keyserver/validateSignature:
+ *   post:
+ *     tags:
+ *       - keyserver
+ *     description: Checks provided **signature** against common nonce and provided **ID**'s public key
+ *     consumes:
+ *       - application/json
+ *     parameters:
+ *       - name: json
+ *         in: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: string
+ *               description: ChatApp ID
+ *             signature:
+ *               type: string
+ *               description: PGP Signature
+ *     responses:
+ *       200:
+ *         description: Signature is valid
+ *       400:
+ *         description: Invalid syntax
+ *       401:
+ *         description: Signature is invalid
+ *       500:
+ *         description: Returns json describing the error
+ */
+router.post('/validateSignature', async (req, res) => {
+  // Syntax check
+  if (!req.body.id || !req.body.signature) {
+    res.sendStatus(400)
+    return
+  }
+
+  // Signature check
+  try {
+    const valid = await verifyNonceSignature(req.body.id, req.body.signature)
+    if (!valid) {
+      res.sendStatus(401)
+      return
+    } else {
+      res.sendStatus(200)
+      return
     }
   } catch (error) {
     res.status(500).json(error)

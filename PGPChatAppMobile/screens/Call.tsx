@@ -31,8 +31,7 @@ export default function Call(props: Props) {
   const navigation = useNavigation()
   const theme = useTheme()
 
-  const amICaller =
-    props.route.params.caller === store.getState().localUserReducer.id
+  const amICaller = props.route.params.caller === store.getState().localUserReducer.id
 
   const [call, setCall] = useState(null)
   const [peer, setPeer] = useState(null)
@@ -153,7 +152,9 @@ export default function Call(props: Props) {
 
   const peerConfig = {
     host: __DEV__
-      ? DeviceInfo.isEmulatorSync() ? '10.0.2.2' : '192.168.1.82'
+      ? DeviceInfo.isEmulatorSync()
+        ? '10.0.2.2'
+        : 'localhost'
       : 'chatapp.tarasa24.dev',
     port: __DEV__ ? 5000 : 443,
     secure: !__DEV__,
@@ -163,9 +164,7 @@ export default function Call(props: Props) {
 
   useEffect(() => {
     const peer = new Peer(
-      amICaller
-        ? props.route.params.callerPeerToken
-        : props.route.params.calleePeerToken,
+      amICaller ? props.route.params.callerPeerToken : props.route.params.calleePeerToken,
       peerConfig
     )
     setPeer(peer)
@@ -198,32 +197,23 @@ export default function Call(props: Props) {
     }
   }, [])
 
-  useEffect(
-    () => {
-      navigation.addListener('beforeRemove', (e) => {
-        setStop(true)
-      })
-    },
-    [navigation]
-  )
+  useEffect(() => {
+    navigation.addListener('beforeRemove', (e) => {
+      setStop(true)
+    })
+  }, [navigation])
 
   // It's not dumb as long as it works
-  useEffect(
-    () => {
-      if (stop === true) {
-        closeCall()
-      }
-    },
-    [stop]
-  )
+  useEffect(() => {
+    if (stop === true) {
+      closeCall()
+    }
+  }, [stop])
 
-  useEffect(
-    () => {
-      if (dataConnection && localMic && !localCamera)
-        dataConnection.send('setVoiceVolume ' + localMicLevel)
-    },
-    [localMicLevel]
-  )
+  useEffect(() => {
+    if (dataConnection && localMic && !localCamera)
+      dataConnection.send('setVoiceVolume ' + localMicLevel)
+  }, [localMicLevel])
 
   return (
     <View style={{ backgroundColor: theme.colors.background }}>
@@ -256,11 +246,7 @@ export default function Call(props: Props) {
             >
               <Avatar
                 userID={
-                  !amICaller ? (
-                    props.route.params.caller
-                  ) : (
-                    props.route.params.callee
-                  )
+                  !amICaller ? props.route.params.caller : props.route.params.callee
                 }
                 size={120}
               />
@@ -319,11 +305,7 @@ export default function Call(props: Props) {
                     alignItems: 'center',
                   }}
                 >
-                  <Icon
-                    name="reverse-camera"
-                    size={20}
-                    color={theme.colors.text}
-                  />
+                  <Icon name="reverse-camera" size={20} color={theme.colors.text} />
                 </View>
               </TouchableOpacity>
             </View>
@@ -340,13 +322,7 @@ export default function Call(props: Props) {
               }}
             >
               <Avatar
-                userID={
-                  amICaller ? (
-                    props.route.params.caller
-                  ) : (
-                    props.route.params.callee
-                  )
-                }
+                userID={amICaller ? props.route.params.caller : props.route.params.callee}
                 size={120}
               />
               <VoiceActivity
@@ -372,9 +348,7 @@ export default function Call(props: Props) {
           activeOpacity={0.7}
           disabled={!dataConnection}
           onPress={() => {
-            localStream
-              .getVideoTracks()
-              .forEach((vt) => (vt.enabled = !localCamera))
+            localStream.getVideoTracks().forEach((vt) => (vt.enabled = !localCamera))
             dataConnection.send(localCamera ? 'hideVideo' : 'showVideo')
             setLocalCamera(!localCamera)
           }}
@@ -407,23 +381,20 @@ export default function Call(props: Props) {
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() =>
-            Alert.alert(
-              'End the call',
-              'Do you really wish to end ongoing call',
-              [
-                {
-                  text: 'Cancel',
-                  style: 'cancel',
+            Alert.alert('End the call', 'Do you really wish to end ongoing call', [
+              {
+                text: 'Cancel',
+                style: 'cancel',
+              },
+              {
+                text: 'End',
+                onPress: () => {
+                  setStop(true)
+                  navigation.goBack()
                 },
-                {
-                  text: 'End',
-                  onPress: () => {
-                    setStop(true)
-                    navigation.goBack()
-                  },
-                },
-              ]
-            )}
+              },
+            ])
+          }
           onLongPress={() => {
             ToastAndroid.showWithGravity(
               'End call',
@@ -454,9 +425,7 @@ export default function Call(props: Props) {
           activeOpacity={0.7}
           disabled={!dataConnection}
           onPress={() => {
-            localStream
-              .getAudioTracks()
-              .forEach((vt) => (vt.enabled = !localMic))
+            localStream.getAudioTracks().forEach((vt) => (vt.enabled = !localMic))
             dataConnection.send(localMic ? 'mute' : 'unmute')
             setlocalMic(!localMic)
           }}
@@ -480,10 +449,7 @@ export default function Call(props: Props) {
               opacity: !dataConnection ? 0.25 : 1,
             }}
           >
-            <Icon
-              name={!localMic ? 'mic' : 'mic-off'}
-              color={theme.colors.text}
-            />
+            <Icon name={!localMic ? 'mic' : 'mic-off'} color={theme.colors.text} />
           </View>
         </TouchableOpacity>
       </View>

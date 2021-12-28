@@ -16,9 +16,8 @@ app.use(express.json())
 const server = createServer(app)
 
 export const io = new Server(server, {
-  path:
-    process.env.NODE_ENV === 'production' ? '/app-api/socket.io' : '/socket.io',
-  maxHttpBufferSize: 1e7,
+  path: process.env.NODE_ENV === 'production' ? '/app-api/socket.io' : '/socket.io',
+  maxHttpBufferSize: 32 * 1e6,
 })
 initSocketIO(io)
 

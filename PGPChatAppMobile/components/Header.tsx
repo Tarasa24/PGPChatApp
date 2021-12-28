@@ -1,12 +1,6 @@
 import { useNavigation } from '@react-navigation/native'
 import React from 'react'
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-} from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native'
 import Icon from 'react-native-ionicons'
 import { useTheme } from './ThemeContext'
 

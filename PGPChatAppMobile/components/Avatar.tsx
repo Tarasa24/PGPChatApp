@@ -7,11 +7,13 @@ import { useTheme } from './ThemeContext'
 import { lightenDarkenColor } from '../assets/ts/lightenDarkenColor'
 import { connect } from 'react-redux'
 import * as RNFS from 'react-native-fs'
+import * as userAvatarsReducer from '../store/reducers/userAvatarsReducer'
 
 interface Props {
   userID: string
   size: number
   userAvatars: Map<string, string>
+  dropAvatar: (userID: string) => void
 }
 
 function Avatar(props: Props) {
@@ -30,15 +32,15 @@ function Avatar(props: Props) {
 
   const [status, setStatus] = useState({ status: StatusEnum.Loading } as Status)
 
-  useEffect(
-    () => {
-      async function main() {
-        const fileID = props.userAvatars[props.userID]
+  useEffect(() => {
+    async function main() {
+      const fileID = props.userAvatars[props.userID]
 
-        if (fileID) {
-          const fileRepository = getRepository(File)
-          const picture = await fileRepository.findOneOrFail({ id: fileID })
+      if (fileID) {
+        const fileRepository = getRepository(File)
+        const picture = await fileRepository.findOne({ id: fileID })
 
+        if (await RNFS.exists(picture.uri))
           setStatus({
             status: StatusEnum.Image,
             picture: {
@@ -46,13 +48,16 @@ function Avatar(props: Props) {
               b64: await RNFS.readFile(picture.uri, 'base64'),
             },
           })
-        } else setStatus({ status: StatusEnum.Svg })
-      }
+        else {
+          await fileRepository.delete(picture)
+          setStatus({ status: StatusEnum.Svg })
+          props.dropAvatar(props.userID)
+        }
+      } else setStatus({ status: StatusEnum.Svg })
+    }
 
-      main()
-    },
-    [props.userAvatars]
-  )
+    main()
+  }, [props.userAvatars])
 
   function evalState() {
     if (status.status === StatusEnum.Image)
@@ -95,6 +100,12 @@ const mapStateToProps = (state: any) => ({
   userAvatars: state.userAvatarsReducer,
 })
 
-const mapDispatchToProps = (dispatch: any) => ({})
+const mapDispatchToProps = (dispatch: any) => ({
+  dropAvatar: (userID: string) =>
+    dispatch({
+      type: 'DROP_USER_AVATAR',
+      payload: { userID: userID },
+    } as userAvatarsReducer.Action),
+})
 
 export default connect(mapStateToProps, mapDispatchToProps)(Avatar)

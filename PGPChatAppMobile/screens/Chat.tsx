@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { PureComponent, useEffect, useRef, useState } from 'react'
 import {
   View,
   TextInput,
@@ -12,6 +12,10 @@ import {
   BackHandler,
   StyleSheet,
   Image,
+  Alert,
+  ToastAndroid,
+  RefreshControl,
+  FlatList,
 } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-ionicons'
@@ -27,19 +31,18 @@ import {
 import ChatHeader from '../components/ChatHeader'
 import { useTheme } from '../components/ThemeContext'
 import ChatBubble from '../components/ChatBubble'
-import { getRepository } from 'typeorm'
+import { getRepository, IsNull } from 'typeorm'
 import { LocalUserState } from '../store/reducers/localUserReducer'
 import { connect } from 'react-redux'
-import {
-  socket,
-  SendPayload,
-  MessageUpdatePayload,
-} from '../assets/ts/socketio'
+import { socket, SendPayload, MessageUpdatePayload } from '../assets/ts/socketio'
 import OpenPGP from 'react-native-fast-openpgp'
 import * as messageUpdatesListReducer from '../store/reducers/messageUpdatesListReducer'
 import * as RNFS from 'react-native-fs'
-import DocumentPicker, { MimeType } from 'react-native-document-picker'
+import DocumentPicker from 'react-native-document-picker'
 import Video from 'react-native-video'
+import RNFetchBlob from 'rn-fetch-blob'
+import * as Compressor from 'react-native-compressor'
+import * as pickedGifReducer from '../store/reducers/pickedGifReducer'
 
 export interface RouteParams {
   participants: {
@@ -55,16 +58,71 @@ interface Props {
   localUser: LocalUserState
   messageUpdatesList: string[]
   addToMessageUpdateList: (messageId: string | string[]) => void
+  pickedGif: InlineFile
+  dropPickedGif: () => void
+}
+
+export interface InlineFile {
+  renderable: boolean
+  mime: string
+  b64: string
+  linkUri?: string
+  uri: string
+  name: string
+}
+
+class ListItem extends PureComponent<{
+  nextMessageTimestamp: number | null
+  m: MessageRaw
+  addToMessageUpdateList: (string) => void
+  otherId: string
+}> {
+  render() {
+    const locale =
+      Platform.OS === 'ios'
+        ? NativeModules.SettingsManager.settings.AppleLocale
+        : NativeModules.I18nManager.localeIdentifier
+    return (
+      <View>
+        {this.props.nextMessageTimestamp !== null &&
+          new Date(this.props.m.timestamp).toDateString() !==
+            new Date(this.props.nextMessageTimestamp).toDateString() && (
+            <Text style={{ textAlign: 'center', color: 'gray', marginTop: 5 }}>
+              {new Date(this.props.nextMessageTimestamp).toLocaleDateString(locale)}{' '}
+            </Text>
+          )}
+        <ChatBubble
+          message={this.props.m as any}
+          onDelete={async (messageID) => {
+            const messageRepository = getRepository(Message)
+            await messageRepository.update(
+              { id: messageID },
+              { status: MessageStatus.deleted, text: '' }
+            )
+
+            const fileRepository = getRepository(File)
+            await fileRepository.delete({
+              parentMessage: await messageRepository.findOne(messageID),
+            })
+
+            socket.emit('messageUpdate', {
+              action: 'DELETE',
+              messageId: messageID,
+              to: this.props.otherId,
+            } as MessageUpdatePayload & { to: string })
+
+            this.props.addToMessageUpdateList(messageID)
+          }}
+        />
+      </View>
+    )
+  }
 }
 
 function Chat(props: Props) {
   const navigation = useNavigation()
   const theme = useTheme()
   const inputRef = useRef<TextInput>()
-  const [scrollViewRef, setScrollViewRef]: [
-    ScrollView,
-    (ref: ScrollView) => void
-  ] = useState(null)
 
   enum Stages {
     Loading,
@@ -77,38 +135,46 @@ function Chat(props: Props) {
 
   const [addFileMenuOpened, setAddFileMenuOpened] = useState(false)
 
-  function shouldScrollDown() {
-    if (scrollViewRef) return true
-    else return false
-  }
+  useEffect(() => {
+    if (Object.keys(props.pickedGif).length != 0) {
+      setInlineFiles([...inlineFiles, props.pickedGif])
+      props.dropPickedGif()
+    }
+  }, [props.pickedGif])
 
-  async function loadMessages() {
+  async function loadMessages(youngerThan = null) {
     const messageRepository = getRepository(Message)
 
-    const messages = await messageRepository
+    const newMessages = await messageRepository
       .createQueryBuilder()
       .where(
-        `(message.recipientId = '${props.route.params.participants.self
-          .id}' AND message.authorId = '${props.route.params.participants.other
-          .id}')`
+        `(message.recipientId = '${
+          props.route.params.participants.self.id
+        }' AND message.authorId = '${props.route.params.participants.other.id}' AND ${
+          youngerThan === null ? '1' : `(message.timestamp < ${youngerThan})`
+        })`
       )
       .orWhere(
-        `(message.recipientId = '${props.route.params.participants.other
-          .id}' AND message.authorId = '${props.route.params.participants.self
-          .id}')`
+        `(message.recipientId = '${
+          props.route.params.participants.other.id
+        }' AND message.authorId = '${props.route.params.participants.self.id}' AND ${
+          youngerThan === null ? '1' : `(message.timestamp < ${youngerThan})`
+        })`
       )
       .select(['id', 'timestamp', 'text', 'authorId AS author', 'status'])
       .orderBy('timestamp', 'DESC')
+      .limit(25)
       .getRawMany()
 
     const fileRepository = getRepository(File)
-    for (let i = 0; i < messages.length; i++) {
-      messages[i].files = await fileRepository.find({
-        where: { parentMessage: messages[i] },
+    for (let i = 0; i < newMessages.length; i++) {
+      newMessages[i].files = await fileRepository.find({
+        where: { parentMessage: newMessages[i] },
       })
     }
 
-    setMessages(messages)
+    if (youngerThan === null) setMessages(newMessages)
+    else setMessages([...messages, ...newMessages])
     setStage(Stages.Loaded)
   }
 
@@ -132,66 +198,41 @@ function Chat(props: Props) {
         to: props.route.params.participants.other.id,
       } as MessageUpdatePayload)
 
-      await messageRepository.update(
-        { id: message.id },
-        { status: MessageStatus.read }
-      )
+      await messageRepository.update({ id: message.id }, { status: MessageStatus.read })
     }
 
-    if (unread.length > 0)
-      props.addToMessageUpdateList(unread.map((msg) => msg.id))
+    if (unread.length > 0) props.addToMessageUpdateList(unread.map((msg) => msg.id))
   }
 
   useEffect(() => {
     navigation.setOptions({
       header: () => <ChatHeader user={props.route.params.participants.other} />,
     })
+
+    loadMessages().then(() => {
+      sendReadStatus()
+    })
   }, [])
 
-  useEffect(
-    () => {
-      const keyboardDidShowListener = Keyboard.addListener(
-        'keyboardDidShow',
-        () => {
-          setAddFileMenuOpened(false)
-          if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: false })
-        }
-      )
-      return () => {
-        keyboardDidShowListener.remove()
+  useEffect(() => {
+    loadMessages().then(() => {
+      sendReadStatus()
+    })
+  }, [props.messageUpdatesList])
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', function () {
+      if (addFileMenuOpened) {
+        setAddFileMenuOpened(false)
+        return true
+      } else {
+        navigation.goBack()
+        return true
       }
-    },
-    [scrollViewRef]
-  )
+    })
 
-  useEffect(
-    () => {
-      loadMessages().then(() => {
-        sendReadStatus()
-      })
-    },
-    [props.messageUpdatesList]
-  )
-
-  useEffect(
-    () => {
-      const backHandler = BackHandler.addEventListener(
-        'hardwareBackPress',
-        function() {
-          if (addFileMenuOpened) {
-            setAddFileMenuOpened(false)
-            return true
-          } else {
-            navigation.goBack()
-            return true
-          }
-        }
-      )
-
-      return () => backHandler.remove()
-    },
-    [addFileMenuOpened]
-  )
+    return () => backHandler.remove()
+  }, [addFileMenuOpened])
 
   async function sendMessage() {
     if (!inputRef.current) return
@@ -221,15 +262,33 @@ function Chat(props: Props) {
           inlineFile.b64 !== null
             ? inlineFile.b64
             : await RNFS.readFile(inlineFile.uri, 'base64')
+        let uri = `${RNFS.ExternalStorageDirectoryPath}/PGPChatApp/${Date.now()}-${
+          inlineFile.name
+        }`
 
-        newFile.uri = `${RNFS.ExternalStorageDirectoryPath}/PGPChatApp/${Date.now()}-${inlineFile.name}`
+        // Save file
+        await RNFS.mkdir(RNFS.ExternalStorageDirectoryPath + '/PGPChatApp')
+        await RNFS.writeFile(uri, base64, 'base64')
+
+        // Caluclate hash
+        const hash = await RNFetchBlob.fs.hash(uri, 'sha256')
+
+        // Check if the file already exists
+        const hashedFiles = await fileRepository.find({
+          where: { hash: hash },
+        })
+
+        // Unlink if it does, and replace the new uri with the one that already exists
+        if (hashedFiles.length >= 1) {
+          await RNFS.unlink(uri)
+          uri = hashedFiles[0].uri
+        } else newFile.hash = hash
+
+        newFile.uri = uri
         newFile.mime = inlineFile.mime
         newFile.parentMessage = message
         newFile.name = inlineFile.name
         newFile.renderable = inlineFile.b64 !== null
-
-        await RNFS.mkdir(RNFS.ExternalStorageDirectoryPath + '/PGPChatApp')
-        await RNFS.writeFile(newFile.uri, base64, 'base64')
 
         await fileRepository.save(newFile)
 
@@ -289,8 +348,7 @@ function Chat(props: Props) {
           }}
           onPress={() => {
             sendMessage()
-          }}
-        >
+          }}>
           <Icon color="white" name="send" />
         </TouchableOpacity>
       )
@@ -308,117 +366,50 @@ function Chat(props: Props) {
           onPress={() => {
             Keyboard.dismiss()
             setAddFileMenuOpened(!addFileMenuOpened)
-          }}
-        >
+          }}>
           <Icon color="white" name="add" />
         </TouchableOpacity>
       )
   }
 
   function chatBubbles() {
-    function generateArray(messages: MessageRaw[]) {
-      const locale =
-        Platform.OS === 'ios'
-          ? NativeModules.SettingsManager.settings.AppleLocale
-          : NativeModules.I18nManager.localeIdentifier
-
-      const out = []
-      for (let i = 0; i < messages.length; i++) {
-        const m = messages[i]
-
-        out.push(
-          <ChatBubble
-            message={m as any}
-            key={m.id}
-            onDelete={async (messageID) => {
-              const messageRepository = getRepository(Message)
-              await messageRepository.update(
-                { id: messageID },
-                { status: MessageStatus.deleted, text: '' }
-              )
-
-              const fileRepository = getRepository(File)
-              await fileRepository.delete({
-                parentMessage: await messageRepository.findOne(messageID),
-              })
-
-              socket.emit('messageUpdate', {
-                action: 'DELETE',
-                messageId: messageID,
-                to: props.route.params.participants.other.id,
-              } as MessageUpdatePayload & { to: string })
-
-              props.addToMessageUpdateList(messageID)
-            }}
-          />
-        )
-
-        if (
-          i + 1 !== messages.length &&
-          new Date(messages[i].timestamp).toDateString() !==
-            new Date(messages[i + 1].timestamp).toDateString()
-        ) {
-          out.push(
-            <Text
-              style={{ textAlign: 'center', color: 'gray', marginTop: 5 }}
-              key={i}
-            >
-              {new Date(messages[i + 1].timestamp).toLocaleDateString(locale)}
-            </Text>
-          )
-        }
-      }
-
-      return out
+    function generate({ item, index }) {
+      return (
+        <ListItem
+          m={item}
+          nextMessageTimestamp={
+            messages[index + 1] ? messages[index + 1].timestamp : null
+          }
+          addToMessageUpdateList={props.addToMessageUpdateList}
+          otherId={props.route.params.participants.other.id}
+        />
+      )
     }
 
-    if (stage === Stages.Loading)
-      return (
-        <View style={{ flexGrow: 1, justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color={theme.colors.primary} />
-        </View>
-      )
-    else
-      return (
-        <ScrollView
-          ref={(ref) => {
-            setScrollViewRef(ref)
-          }}
-          onContentSizeChange={() => {
-            if (shouldScrollDown())
-              scrollViewRef.scrollToEnd({ animated: false })
-          }}
-        >
-          <View
-            style={{
-              flexGrow: 1,
-              flexDirection: 'column-reverse',
-              paddingBottom: 5,
-            }}
-          >
-            {generateArray(messages)}
-          </View>
-        </ScrollView>
-      )
-  }
-
-  interface InlineFile {
-    renderable: boolean
-    mime: MimeType
-    b64: string
-    linkUri?: string
-    uri: string
-    name: string
+    return (
+      <FlatList
+        inverted={true}
+        data={messages}
+        renderItem={generate}
+        keyExtractor={(item) => item.id}
+        onEndReached={() => {
+          setStage(Stages.Loading)
+          loadMessages(messages[messages.length - 1].timestamp)
+        }}
+        ListFooterComponent={
+          stage === Stages.Loading && (
+            <ActivityIndicator size="large" color={theme.colors.primary} />
+          )
+        }
+        ListFooterComponentStyle={{
+          flexGrow: 1,
+          paddingTop: stage === Stages.Loading ? 10 : 0,
+        }}
+      />
+    )
   }
 
   const [inlineFiles, setInlineFiles] = useState([] as InlineFile[])
-
-  useEffect(
-    () => {
-      if (shouldScrollDown()) scrollViewRef.scrollToEnd({ animated: false })
-    },
-    [inlineFiles, addFileMenuOpened]
-  )
 
   function showInlineFiles() {
     function evalFile(file: InlineFile) {
@@ -430,18 +421,14 @@ function Chat(props: Props) {
               width: 64,
               justifyContent: 'center',
               alignItems: 'center',
-            }}
-          >
+            }}>
             <Icon name="document" size={32} color={theme.colors.text} />
-            <Text
-              style={{ color: theme.colors.text, fontSize: 10 }}
-              numberOfLines={1}
-            >
+            <Text style={{ color: theme.colors.text, fontSize: 10 }} numberOfLines={1}>
               {file.name}
             </Text>
           </View>
         )
-      else if (file.mime.includes('.mp4'))
+      else if (file.mime.includes('mp4'))
         return (
           <Video
             source={{ uri: file.uri }}
@@ -474,8 +461,7 @@ function Chat(props: Props) {
               borderRadius: 10,
               overflow: 'hidden',
               marginHorizontal: 5,
-            }}
-          >
+            }}>
             <View
               style={{
                 position: 'absolute',
@@ -488,8 +474,7 @@ function Chat(props: Props) {
                 backgroundColor: theme.colors.primary,
                 justifyContent: 'center',
                 alignItems: 'center',
-              }}
-            >
+              }}>
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => {
@@ -497,8 +482,7 @@ function Chat(props: Props) {
                     ...inlineFiles.slice(0, index),
                     ...inlineFiles.slice(index + 1),
                   ])
-                }}
-              >
+                }}>
                 <Icon name="close" size={20} color="white" />
               </TouchableOpacity>
             </View>
@@ -514,8 +498,7 @@ function Chat(props: Props) {
           flexDirection: 'row',
           alignItems: 'center',
           marginBottom: 5,
-        }}
-      >
+        }}>
         {out}
         {!addFileMenuOpened ? (
           <View style={{ paddingHorizontal: 15 }}>{sendAddButton(true)}</View>
@@ -529,25 +512,32 @@ function Chat(props: Props) {
       style={{
         flex: 1,
         backgroundColor: theme.colors.background,
-      }}
-    >
+      }}>
       {chatBubbles()}
 
       <View
         style={{
           paddingHorizontal: 5,
           paddingTop: 7.5,
-        }}
-      >
+        }}>
         <ScrollView horizontal={true}>{showInlineFiles()}</ScrollView>
+        {inlineFiles.length > 0 && (
+          <Text style={{ color: theme.colors.text }}>
+            Space used:{' '}
+            {(
+              inlineFiles.map((e) => Buffer.from(e.b64).length).reduce((p, c) => p + c) /
+              1e6
+            ).toFixed(2)}{' '}
+            / 16 MB
+          </Text>
+        )}
         <View
           style={{
             flexDirection: 'row',
             paddingHorizontal: 5,
             paddingVertical: 7.5,
             alignItems: 'center',
-          }}
-        >
+          }}>
           <TextInput
             ref={inputRef}
             style={{
@@ -566,13 +556,22 @@ function Chat(props: Props) {
               ),
             }}
             multiline={true}
+            maxLength={700}
             placeholder="Start typing your message..."
             placeholderTextColor={lightenDarkenColor(
               theme.colors.text,
               150 * (theme.dark ? -1 : 1)
             )}
             value={inputState}
-            onChangeText={(change) => setInputState(change)}
+            onChangeText={(change) => {
+              if (change.length == 700)
+                ToastAndroid.showWithGravity(
+                  'Character limit hit',
+                  ToastAndroid.SHORT,
+                  ToastAndroid.BOTTOM
+                )
+              setInputState(change)
+            }}
             //@ts-ignore
             onImageChange={(event) => {
               const { mime, linkUri, uri, data } = event.nativeEvent
@@ -590,9 +589,7 @@ function Chat(props: Props) {
               ])
             }}
           />
-          <View style={{ flexGrow: 1, alignItems: 'center' }}>
-            {sendAddButton()}
-          </View>
+          <View style={{ flexGrow: 1, alignItems: 'center' }}>{sendAddButton()}</View>
         </View>
       </View>
 
@@ -605,20 +602,57 @@ function Chat(props: Props) {
                 onPress={async () => {
                   try {
                     const res = await DocumentPicker.pickMultiple({
-                      type: [
-                        DocumentPicker.types.images,
-                        DocumentPicker.types.video,
-                      ],
+                      type: [DocumentPicker.types.images, DocumentPicker.types.video],
                     })
 
                     const out = [] as InlineFile[]
+                    let combinedSize = 0
                     for (let i = 0; i < res.length; i++) {
                       const file = res[i]
 
+                      let compressed_b64
+                      if (file.type.includes('image') && !file.type.includes('gif'))
+                        compressed_b64 = await Compressor.Image.compress(
+                          await RNFS.readFile(file.uri, 'base64'),
+                          {
+                            input: 'base64',
+                            compressionMethod: 'manual',
+                            maxWidth: 1000,
+                            maxHeight: 1000,
+                            quality: 0.4,
+                            output: 'jpg',
+                            returnableOutputType: 'base64',
+                          }
+                        )
+                      else {
+                        if (file.size / 1e6 > 16) {
+                          Alert.alert(
+                            'Files have exceeded size of 16 MB',
+                            'Try sending files individually or compressing them.',
+                            [{ text: 'ok', style: 'default' }]
+                          )
+                          setInlineFiles([])
+                          return
+                        }
+                        compressed_b64 = await RNFS.readFile(file.uri, 'base64')
+                      }
+
+                      combinedSize += Buffer.from(compressed_b64).length
+
+                      if (combinedSize / 1e6 > 16) {
+                        Alert.alert(
+                          'Files have exceeded size of 16 MB',
+                          'Try sending files individually or compressing them.',
+                          [{ text: 'ok', style: 'default' }]
+                        )
+                        setInlineFiles([])
+                        return
+                      }
+
                       out.push({
                         uri: file.uri,
-                        mime: file.type as MimeType,
-                        b64: await RNFS.readFile(file.uri, 'base64'),
+                        mime: file.type,
+                        b64: compressed_b64,
                         name: file.name,
                         renderable: true,
                       })
@@ -628,8 +662,7 @@ function Chat(props: Props) {
                   } catch (err) {
                     if (!DocumentPicker.isCancel(err)) throw err
                   }
-                }}
-              >
+                }}>
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -637,21 +670,21 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}
-                >
+                  }}>
                   <Icon name="photos" size={64} color={theme.colors.text} />
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: theme.colors.text,
-                    }}
-                  >
+                    }}>
                     Gallery
                   </Text>
                 </View>
               </TouchableOpacity>
 
-              <TouchableOpacity activeOpacity={0.7}>
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => navigation.navigate('GifPicker')}>
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -659,24 +692,21 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}
-                >
+                  }}>
                   <Text
                     style={{
                       fontWeight: 'bold',
                       color: theme.colors.text,
                       fontSize: 32,
                       lineHeight: 64,
-                    }}
-                  >
+                    }}>
                     GIF
                   </Text>
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: theme.colors.text,
-                    }}
-                  >
+                    }}>
                     GIF
                   </Text>
                 </View>
@@ -709,7 +739,7 @@ function Chat(props: Props) {
 
                       out.push({
                         uri: file.uri,
-                        mime: file.type as MimeType,
+                        mime: file.type,
                         b64: null,
                         name: file.name,
                         renderable: false,
@@ -720,8 +750,7 @@ function Chat(props: Props) {
                   } catch (err) {
                     if (!DocumentPicker.isCancel(err)) throw err
                   }
-                }}
-              >
+                }}>
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -729,15 +758,13 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}
-                >
+                  }}>
                   <Icon name="document" size={64} color={theme.colors.text} />
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: theme.colors.text,
-                    }}
-                  >
+                    }}>
                     File
                   </Text>
                 </View>
@@ -751,15 +778,13 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}
-                >
+                  }}>
                   <Icon name="time" size={64} color="grey" />
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: 'grey',
-                    }}
-                  >
+                    }}>
                     More to come...
                   </Text>
                 </View>
@@ -790,6 +815,7 @@ const styles = StyleSheet.create({
 const mapStateToProps = (state: any) => ({
   localUser: state.localUserReducer,
   messageUpdatesList: state.messageUpdatesListReducer,
+  pickedGif: state.pickedGifReducer,
 })
 
 const mapDispatchToProps = (dispatch: any) => ({
@@ -799,9 +825,12 @@ const mapDispatchToProps = (dispatch: any) => ({
       payload: { messageID: messageId },
     } as messageUpdatesListReducer.Action)
   },
+  dropPickedGif: () => {
+    dispatch({
+      type: 'DROP_PICKED_GIF',
+      payload: {},
+    } as pickedGifReducer.Action)
+  },
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(Chat)
-function id(id: any, messageID: string) {
-  throw new Error('Function not implemented.')
-}

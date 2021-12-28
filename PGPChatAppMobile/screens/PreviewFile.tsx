@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react'
 import { View, Text, Image, Dimensions } from 'react-native'
-import { MimeType } from 'react-native-document-picker'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-ionicons'
 import { getRepository } from 'typeorm'
 import { Message } from '../assets/ts/orm'
 import { useTheme } from '../components/ThemeContext'
 import FileViewer from 'react-native-file-viewer'
+import Video from 'react-native-video'
 
 export interface PreviewFileType {
   renderable: boolean
-  mime: MimeType
+  mime: string
   b64: string
   linkUri?: string
   uri: string
@@ -44,19 +44,34 @@ export default function PreviewFile(props: Props) {
 
   function showFile() {
     if (props.route.params.file.renderable)
-      return (
-        <Image
-          style={{
-            width: Dimensions.get('window').width,
-            height: Dimensions.get('window').height - 175,
-          }}
-          resizeMode={'contain'}
-          source={{
-            uri: `data:${props.route.params.file.mime};base64,${props.route
-              .params.file.b64}`,
-          }}
-        />
-      )
+      if (props.route.params.file.name.includes('.mp4'))
+        return (
+          <Video
+            style={{
+              width: Dimensions.get('window').width,
+              height: Dimensions.get('window').height - 175,
+            }}
+            resizeMode={'contain'}
+            volume={0}
+            repeat={true}
+            source={{
+              uri: props.route.params.file.uri,
+            }}
+          />
+        )
+      else
+        return (
+          <Image
+            style={{
+              width: Dimensions.get('window').width,
+              height: Dimensions.get('window').height - 175,
+            }}
+            resizeMode={'contain'}
+            source={{
+              uri: `data:${props.route.params.file.mime};base64,${props.route.params.file.b64}`,
+            }}
+          />
+        )
     else
       return (
         <View
@@ -65,12 +80,9 @@ export default function PreviewFile(props: Props) {
             height: Dimensions.get('window').height - 175,
             justifyContent: 'center',
             alignItems: 'center',
-          }}
-        >
+          }}>
           <Icon name="document" color={theme.colors.text} size={128} />
-          <Text style={{ color: theme.colors.text }}>
-            {props.route.params.file.name}
-          </Text>
+          <Text style={{ color: theme.colors.text }}>{props.route.params.file.name}</Text>
         </View>
       )
   }
@@ -82,8 +94,7 @@ export default function PreviewFile(props: Props) {
           activeOpacity={0.7}
           onPress={() => {
             FileViewer.open(props.route.params.file.uri)
-          }}
-        >
+          }}>
           {showFile()}
         </TouchableOpacity>
       </View>

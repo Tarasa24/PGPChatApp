@@ -35,11 +35,7 @@ export type MessageUpdatePayload = {
   to: UserID
   from: UserID
   messageId: string
-  action:
-    | 'SET_STATUS_SENT'
-    | 'SET_STATUS_RECIEVED'
-    | 'SET_STATUS_READ'
-    | 'DELETE'
+  action: 'SET_STATUS_SENT' | 'SET_STATUS_RECIEVED' | 'SET_STATUS_READ' | 'DELETE'
   timestamp?: number
 }
 
@@ -54,7 +50,7 @@ export type CallPayload = {
 const path = __DEV__
   ? DeviceInfo.isEmulatorSync()
     ? 'ws://10.0.2.2:5000'
-    : 'ws://192.168.1.82:5000'
+    : 'ws://localhost:5000'
   : 'wss://chatapp.tarasa24.dev'
 
 const socket = io(path, {
@@ -125,6 +121,7 @@ async function login(socket: any) {
   } as socketConnectedReducer.Action)
 
   const localuser = store.getState().localUserReducer
+
   if (!localuser.id) {
     socket.disconnect()
     return
@@ -135,12 +132,7 @@ async function login(socket: any) {
 
   socket.emit('login', {
     userID: localuser.id,
-    signature: await OpenPGP.sign(
-      nonce,
-      localuser.publicKey,
-      localuser.privateKey,
-      ''
-    ),
+    signature: await OpenPGP.sign(nonce, localuser.publicKey, localuser.privateKey, ''),
   } as LoginPayload)
 
   store.dispatch({
@@ -163,11 +155,7 @@ async function connect() {
     // Check if incoming user already exists in the device DB
     if ((await userRepository.count({ id: payload.from })) === 0) {
       try {
-        const res = await fetchRest('/keyserver/lookup/' + payload.from, {
-          headers: {
-            'Accept-Encoding': 'application/json',
-          },
-        })
+        const res = await fetchRest('/keyserver/lookup/' + payload.from)
 
         const sender = (await res.json()) as ORM.User
 
@@ -190,9 +178,7 @@ async function connect() {
     msg.id = payload.id
     msg.timestamp = Number(new Date(payload.timestamp))
     msg.author = author
-    msg.recipient = await userRepository.findOne(
-      store.getState().localUserReducer.id
-    )
+    msg.recipient = await userRepository.findOne(store.getState().localUserReducer.id)
 
     const recievePayload: ORM.sendMessageContent = JSON.parse(
       await OpenPGP.decrypt(
@@ -221,20 +207,39 @@ async function connect() {
     if (recievePayload.files.length > 0) {
       for (let i = 0; i < recievePayload.files.length; i++) {
         const file = recievePayload.files[i]
-        const uri = `${RNFS.ExternalStorageDirectoryPath}/PGPChatApp/${Date.now()}-${file.name}`
+        let uri = `${RNFS.ExternalStorageDirectoryPath}/PGPChatApp/${Date.now()}-${
+          file.name
+        }`
 
         await RNFS.mkdir(RNFS.ExternalStorageDirectoryPath + '/PGPChatApp')
+        const newFile = new ORM.File()
 
-        if (!file.linkUri) await RNFS.writeFile(uri, file.base64, 'base64')
-        else
+        // Save file
+        if (file.linkUri)
           await RNFetchBlob.config({
             path: uri,
           }).fetch('GET', file.linkUri, {})
+        else await RNFS.writeFile(uri, file.base64, 'base64')
 
+        // Calculate hash
+        const fileHash = await RNFetchBlob.fs.hash(uri, 'sha256')
+
+        // Check if a file with the same hash exists
         const fileRepository = getRepository(ORM.File)
-        const newFile = new ORM.File()
+        const hashedFiles = await fileRepository.find({
+          where: { hash: fileHash },
+        })
+
+        // If it does, unlink the new file and use previous uri
+        if (hashedFiles.length >= 1) {
+          RNFetchBlob.fs.unlink(uri)
+          uri = hashedFiles[0].uri
+        } else newFile.hash = fileHash
+
+        // Save db entry
         newFile.linkUri = file.linkUri
         newFile.mime = file.mime
+        newFile.hash = hashedFiles.length >= 1 ? null : fileHash
         newFile.uri = uri
         newFile.name = file.name
         newFile.renderable = file.renderable
@@ -246,12 +251,6 @@ async function connect() {
 
     // Send acknowledgement of recieving and clean-up
     socket.emit('recieveAck', msg.id)
-    socket.emit('messageUpdate', {
-      to: msg.author.id,
-      from: store.getState().localUserReducer.id,
-      action: 'SET_STATUS_RECIEVED',
-      messageId: msg.id,
-    } as MessageUpdatePayload)
 
     store.dispatch({
       type: 'ADD_TO_MESSAGE_UPDATES_LIST',
@@ -282,6 +281,9 @@ async function connect() {
             .andWhere('status != :status', {
               status: ORM.MessageStatus.deleted,
             })
+            .andWhere('status < :status', {
+              status: ORM.MessageStatus.sent,
+            })
             .execute()
 
           break
@@ -296,6 +298,9 @@ async function connect() {
             .andWhere('status != :status', {
               status: ORM.MessageStatus.deleted,
             })
+            .andWhere('status < :status', {
+              status: ORM.MessageStatus.recieved,
+            })
             .execute()
           break
         case 'SET_STATUS_READ':
@@ -308,6 +313,9 @@ async function connect() {
             .where('id = :id', { id: payload.messageId })
             .andWhere('status != :status', {
               status: ORM.MessageStatus.deleted,
+            })
+            .andWhere('status < :status', {
+              status: ORM.MessageStatus.read,
             })
             .execute()
           break
@@ -345,9 +353,7 @@ async function connect() {
 
   socket.on('call', async (payload: CallPayload) => {
     if (
-      [payload.caller, payload.callee].includes(
-        store.getState().localUserReducer.id
-      ) &&
+      [payload.caller, payload.callee].includes(store.getState().localUserReducer.id) &&
       navigation.getCurrentRoute().name !== 'Call'
     )
       navigation.navigate('Call', {

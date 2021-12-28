@@ -15,8 +15,8 @@ interface WebRTCReqBody {
 
 /**
  * @swagger
- * /call:
- *   delete:
+ * /call/end:
+ *   post:
  *     tags:
  *       - call
  *     description: Ends ongoing call for callee with given **id**. Request is authenticated by supplied signature.
@@ -47,9 +47,11 @@ interface WebRTCReqBody {
  *       500:
  *         description: Returns json describing the error
  */
-router.delete('/', async (req: Request<{}, {}, WebRTCReqBody>, res) => {
+router.post('/end', async (req: Request<{}, {}, WebRTCReqBody>, res) => {
   try {
     // Syntax check
+    console.log(req.body)
+
     if (!req.body.id || !req.body.signature) {
       res.sendStatus(400)
       return
@@ -82,7 +84,7 @@ router.delete('/', async (req: Request<{}, {}, WebRTCReqBody>, res) => {
 
 /**
  * @swagger
- * /call:
+ * /call/accept:
  *   post:
  *     tags:
  *       - call
@@ -116,7 +118,7 @@ router.delete('/', async (req: Request<{}, {}, WebRTCReqBody>, res) => {
  *       500:
  *         description: Returns json describing the error
  */
-router.post('/', async (req: Request<{}, {}, WebRTCReqBody>, res) => {
+router.post('/accept', async (req: Request<{}, {}, WebRTCReqBody>, res) => {
   try {
     // Syntax check
     if (!req.body.id || !req.body.signature) {
@@ -185,10 +187,7 @@ router.get('/:id', async (req: Request<{ id: string }, {}, {}>, res) => {
 
     const count = await OngoingCalls.count({
       where: {
-        [Sequelize.Op.or]: [
-          { caller: req.params.id },
-          { callee: req.params.id },
-        ],
+        [Sequelize.Op.or]: [{ caller: req.params.id }, { callee: req.params.id }],
       },
     })
 

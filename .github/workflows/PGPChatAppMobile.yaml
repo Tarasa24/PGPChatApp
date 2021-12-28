@@ -43,7 +43,7 @@ jobs:
           key: ${{ runner.os }}-gradle-caches-${{ hashFiles('PGPChatAppMobile/android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-caches-
-      
+
       - name: Make Gradlew Executable
         working-directory: ./PGPChatAppMobile/android
         run: chmod +x ./gradlew
@@ -51,26 +51,28 @@ jobs:
         working-directory: ./PGPChatAppMobile/android
         run: ./gradlew assemble --no-daemon
 
-      - name: Add SHORT_SHA env property with commit short sha
-        id: short-sha
-        run: echo "::set-output name=SHORT_SHA::$(echo ${GITHUB_SHA} | cut -c1-8)"
+      - name: get-npm-version
+        id: package-version
+        uses: martinbeentjes/npm-get-version-action@master
+        with:
+          path: ./PGPChatAppMobile/package.json
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ steps.short-sha.outputs.SHORT_SHA }}
-          release_name: Release ${{ steps.short-sha.outputs.SHORT_SHA }}
+          tag_name: ${{ steps.package-version.outputs.current-version }}
+          release_name: Release ${{ steps.package-version.outputs.current-version }}
           draft: true
           prerelease: false
       - name: Upload Release Asset
-        id: upload-release-asset 
+        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} 
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: ./PGPChatAppMobile/android/app/build/outputs/apk/release/app-release.apk
           asset_name: PGPChatApp.apk
           asset_content_type: application/vnd.android.package-archive

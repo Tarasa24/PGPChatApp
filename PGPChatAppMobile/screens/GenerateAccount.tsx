@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { View, Text, ActivityIndicator, Button } from 'react-native'
+import { View, Text, ActivityIndicator, Button, StyleSheet } from 'react-native'
 import OpenPGP, { KeyPair } from 'react-native-fast-openpgp'
 import { useTheme } from '../components/ThemeContext'
 import CryptoJS from 'crypto-js'
@@ -14,6 +14,8 @@ import { getRepository } from 'typeorm'
 import Icon from 'react-native-ionicons'
 import Clipboard from '@react-native-clipboard/clipboard'
 import RNRestart from 'react-native-restart'
+import Waves from '../components/svg/Waves'
+import WavesDark from '../components/svg/Waves-dark'
 
 interface Props {
   localUser: LocalUserState
@@ -45,88 +47,85 @@ export function GenerateAccount(props: Props) {
   const [localUserScoped, setLocalUserScoped] = useState({} as LocalUserState)
   const [refresh, setRefresh] = useState(0)
 
-  useEffect(
-    () => {
-      function generateDerivedAdress(publicKey: string) {
-        const firstHash = CryptoJS.SHA256(publicKey)
-        const secondHash = CryptoJS.RIPEMD160(firstHash).toString()
+  useEffect(() => {
+    function generateDerivedAdress(publicKey: string) {
+      const firstHash = CryptoJS.SHA256(publicKey)
+      const secondHash = CryptoJS.RIPEMD160(firstHash).toString()
 
-        return bs58.encode(Buffer.from(secondHash, 'hex'))
-      }
+      return bs58.encode(Buffer.from(secondHash, 'hex'))
+    }
 
-      async function generateKeyPair() {
-        const keyPair = await OpenPGP.generate({
-          keyOptions: {
-            cipher: 'aes256',
-            hash: 'sha256',
-            RSABits: 4096,
-            compression: 'zlib',
-            compressionLevel: 7,
-          },
-        })
-        return keyPair
-      }
-
-      generateKeyPair().then((keyPair) => {
-        const derivedID = generateDerivedAdress(keyPair.publicKey)
-        setStage(Stage.Checking)
-
-        fetchRest('/keyserver/check/' + derivedID)
-          .then((res) => {
-            switch (res.status) {
-              case 200:
-                setStage(Stage.Success)
-                Clipboard.setString(derivedID)
-                Toast.show({
-                  type: 'success',
-                  position: 'bottom',
-                  text1: 'Keypair has been successfully generated',
-                  text2: 'Your ChatApp Adress has been copied to the clipboard',
-                  visibilityTime: 10000,
-                })
-
-                setLocalUserScoped({
-                  id: derivedID,
-                  privateKey: keyPair.privateKey,
-                  publicKey: keyPair.publicKey,
-                })
-                break
-              case 409:
-                setStage(Stage.Error)
-                Toast.show({
-                  type: 'error',
-                  position: 'bottom',
-                  text1: 'Generated ChatApp Adress is already in use',
-                  text2:
-                    'Odds of that happening are roughly 1 : 23.7 Octillion\n(you should go bet in a lottery or something)',
-                  autoHide: false,
-                })
-                break
-              default:
-                setStage(Stage.Error)
-                Toast.show({
-                  type: 'error',
-                  position: 'bottom',
-                  text1: 'Server returned code ' + res.status,
-                  autoHide: false,
-                })
-                break
-            }
-          })
-          .catch(() => {
-            setStage(Stage.Error)
-            Toast.show({
-              type: 'error',
-              position: 'bottom',
-              text1: 'Error connecting to the Keyserver',
-              text2: 'Check your internet connection and try again',
-              autoHide: false,
-            })
-          })
+    async function generateKeyPair() {
+      const keyPair = await OpenPGP.generate({
+        keyOptions: {
+          cipher: 'aes256',
+          hash: 'sha256',
+          RSABits: 4096,
+          compression: 'zlib',
+          compressionLevel: 7,
+        },
       })
-    },
-    [refresh]
-  )
+      return keyPair
+    }
+
+    generateKeyPair().then((keyPair) => {
+      const derivedID = generateDerivedAdress(keyPair.publicKey)
+      setStage(Stage.Checking)
+
+      fetchRest('/keyserver/check/' + derivedID)
+        .then((res) => {
+          switch (res.info().status) {
+            case 200:
+              setStage(Stage.Success)
+              Clipboard.setString(derivedID)
+              Toast.show({
+                type: 'success',
+                position: 'bottom',
+                text1: 'Keypair has been successfully generated',
+                text2: 'Your ChatApp Adress has been copied to the clipboard',
+                visibilityTime: 10000,
+              })
+
+              setLocalUserScoped({
+                id: derivedID,
+                privateKey: keyPair.privateKey,
+                publicKey: keyPair.publicKey,
+              })
+              break
+            case 409:
+              setStage(Stage.Error)
+              Toast.show({
+                type: 'error',
+                position: 'bottom',
+                text1: 'Generated ChatApp Adress is already in use',
+                text2:
+                  'Odds of that happening are roughly 1 : 23.7 Octillion\n(you should go bet in a lottery or something)',
+                autoHide: false,
+              })
+              break
+            default:
+              setStage(Stage.Error)
+              Toast.show({
+                type: 'error',
+                position: 'bottom',
+                text1: 'Server returned code ' + res.info().status,
+                autoHide: false,
+              })
+              break
+          }
+        })
+        .catch(() => {
+          setStage(Stage.Error)
+          Toast.show({
+            type: 'error',
+            position: 'bottom',
+            text1: 'Error connecting to the Keyserver',
+            text2: 'Check your internet connection and try again',
+            autoHide: false,
+          })
+        })
+    })
+  }, [refresh])
 
   function loadingDisplayCond() {
     if (stage === Stage.Generating || stage === Stage.Checking)
@@ -134,20 +133,16 @@ export function GenerateAccount(props: Props) {
         <View>
           <ActivityIndicator size="large" color={theme.colors.primary} />
           <Text style={{ marginTop: 10, color: theme.colors.text }}>
-            {stage === Stage.Generating ? (
-              'Generating keys'
-            ) : (
-              'Connecting to the Keyserver'
-            )}
+            {stage === Stage.Generating
+              ? 'Generating keys'
+              : 'Connecting to the Keyserver'}
           </Text>
         </View>
       )
     else if (stage === Stage.Success) {
       return (
         <View>
-          <Text style={{ color: theme.colors.text }}>
-            Your very own ChatApp Adress:
-          </Text>
+          <Text style={{ color: theme.colors.text }}>Your very own ChatApp Adress:</Text>
           <Text style={{ color: theme.colors.text, fontSize: 21 }}>
             {localUserScoped.id}
           </Text>
@@ -159,18 +154,12 @@ export function GenerateAccount(props: Props) {
               onPress={async () => {
                 try {
                   // Send to keyserver
-                  const res = await fetchRest('/keyserver/create', {
-                    method: 'POST',
-                    headers: {
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      id: localUserScoped.id,
-                      publicKey: localUserScoped.publicKey,
-                    }),
+                  const res = await fetchRest('/keyserver/create', 'POST', {
+                    id: localUserScoped.id,
+                    publicKey: localUserScoped.publicKey,
                   })
 
-                  switch (res.status) {
+                  switch (res.info().status) {
                     case 201:
                       // All normal
                       break
@@ -183,14 +172,11 @@ export function GenerateAccount(props: Props) {
                     case 500:
                       throw JSON.stringify(await res.json())
                     default:
-                      throw 'Unexpected response from the server ' + res.status
+                      throw 'Unexpected response from the server ' + res.info().status
                   }
 
                   // Save to async sotrage as generic user + save to redux
-                  await saveUserToDB(
-                    localUserScoped.id,
-                    localUserScoped.publicKey
-                  )
+                  await saveUserToDB(localUserScoped.id, localUserScoped.publicKey)
                   props.reduxSetLocalUser(localUserScoped)
 
                   // Restart app
@@ -241,10 +227,22 @@ export function GenerateAccount(props: Props) {
       }}
     >
       <Toast ref={(ref) => Toast.setRef(ref)} style={{ zIndex: 9 }} />
+      {!theme.dark ? <Waves style={styles.waves} /> : <WavesDark style={styles.waves} />}
       {loadingDisplayCond()}
     </View>
   )
 }
+
+const styles = StyleSheet.create({
+  waves: {
+    zIndex: 1,
+    transform: [{ scale: 0.65 }],
+    position: 'absolute',
+    left: -500,
+    top: -85,
+    marginBottom: -80,
+  },
+})
 
 const mapStateToProps = (state: any) => ({
   localUser: state.localUserReducer,

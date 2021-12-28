@@ -14,15 +14,13 @@ const Component = (props: {
   colorScheme: ColorSchemeName
 }) => {
   /*
-    * To enable changing the app theme dynamicly in the app (run-time)
-    * we're gonna use useState so we can override the default device theme
-    */
+   * To enable changing the app theme dynamicly in the app (run-time)
+   * we're gonna use useState so we can override the default device theme
+   */
   const [dark, setdark] = React.useState(props.colorScheme === 'dark')
 
   // Listening to changes of device appearance while in run-time
-  React.useEffect(() => setdark(props.colorScheme === 'dark'), [
-    props.colorScheme,
-  ])
+  React.useEffect(() => setdark(props.colorScheme === 'dark'), [props.colorScheme])
 
   const defaultTheme = {
     dark,
@@ -33,9 +31,7 @@ const Component = (props: {
   }
 
   return (
-    <ThemeContext.Provider value={defaultTheme}>
-      {props.children}
-    </ThemeContext.Provider>
+    <ThemeContext.Provider value={defaultTheme}>{props.children}</ThemeContext.Provider>
   )
 }
 
