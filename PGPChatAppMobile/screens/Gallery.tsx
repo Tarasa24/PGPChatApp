@@ -118,7 +118,11 @@ export default function Gallery(props: Props) {
                   <Text
                     numberOfLines={1}
                     ellipsizeMode="tail"
-                    style={{ marginHorizontal: 10, marginTop: 15 }}>
+                    style={{
+                      marginHorizontal: 10,
+                      marginTop: 15,
+                      color: theme.colors.text,
+                    }}>
                     {file.name}
                   </Text>
                 </View>
