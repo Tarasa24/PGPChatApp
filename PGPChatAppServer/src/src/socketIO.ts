@@ -140,28 +140,6 @@ export default function (io: Server) {
       }
     })
 
-    socket.on('recieveAck', async (messageID: string) => {
-      // Remove message from queue upon acknowledgment
-      try {
-        checkLogin(socket)
-        const msg = (await MessagesQueue.findOne({
-          where: {
-            id: messageID,
-            to: socketUserMap[socket.id],
-          },
-        })) as MessagesQueueType | null
-
-        if (msg) {
-          await MessagesQueue.destroy({
-            where: {
-              id: messageID,
-              to: socketUserMap[socket.id],
-            },
-          })
-        }
-      } catch (error) {}
-    })
-
     socket.on('send', async (data: SendPayload) => {
       try {
         checkLogin(socket)
@@ -226,6 +204,13 @@ export default function (io: Server) {
           await sendNotification(data.to, {
             COMMAND: 'NEW_MESSAGE',
             PAYLOAD: { id: null },
+          })
+        } else if (data.action === 'SET_STATUS_READ') {
+          // Delete message from the queue when and only when user confirmed read
+          await MessagesQueue.destroy({
+            where: {
+              id: data.messageId,
+            },
           })
         }
 

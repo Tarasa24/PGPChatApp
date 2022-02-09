@@ -46,7 +46,6 @@ export type CallPayload = {
   calleePeerToken: string
 }
 
-// TODO: Add production url
 const path = __DEV__
   ? DeviceInfo.isEmulatorSync()
     ? 'ws://10.0.2.2:5000'
@@ -152,6 +151,10 @@ async function connect() {
     const messageRepository = getRepository(ORM.Message)
     const userRepository = getRepository(ORM.User)
 
+    // If recieved duplicate message, silently drop
+    const messageAlreadyExists = (await messageRepository.count({ id: payload.id })) !== 0
+    if (messageAlreadyExists) return
+
     // Check if incoming user already exists in the device DB
     if ((await userRepository.count({ id: payload.from })) === 0) {
       try {
@@ -248,9 +251,6 @@ async function connect() {
         fileRepository.insert(newFile)
       }
     }
-
-    // Send acknowledgement of recieving and clean-up
-    socket.emit('recieveAck', msg.id)
 
     store.dispatch({
       type: 'ADD_TO_MESSAGE_UPDATES_LIST',
