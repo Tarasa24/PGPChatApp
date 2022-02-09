@@ -239,7 +239,6 @@ function Chat(props: Props) {
     const text = inputState
     setInputState('')
     inputRef.current.clear()
-    inputRef.current.blur()
 
     const messageRepository = getRepository(Message)
 
@@ -540,6 +539,7 @@ function Chat(props: Props) {
           }}>
           <TextInput
             ref={inputRef}
+            autoFocus={true}
             style={{
               maxWidth: '87.5%',
               color: theme.colors.text,
