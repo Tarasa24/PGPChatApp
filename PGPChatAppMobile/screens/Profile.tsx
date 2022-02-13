@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import { Alert, Button, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
+import {
+  Alert,
+  Button,
+  Linking,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native'
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler'
 import { connect } from 'react-redux'
 import { lightenDarkenColor } from '../assets/ts/lightenDarkenColor'
@@ -126,8 +135,7 @@ export function Profile(props: Props) {
             position: 'absolute',
             right: 0,
             zIndex: 9,
-          }}
-        >
+          }}>
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() =>
@@ -140,8 +148,7 @@ export function Profile(props: Props) {
                   props.dropAvatar(localUser.id)
                   removeImageFromUser(localUser)
                 })
-            }
-          >
+            }>
             <View
               style={{
                 backgroundColor: theme.colors.primary,
@@ -150,8 +157,7 @@ export function Profile(props: Props) {
                 height: 35,
                 alignItems: 'center',
                 justifyContent: 'center',
-              }}
-            >
+              }}>
               <Icon name="close" color="white" />
             </View>
           </TouchableOpacity>
@@ -177,8 +183,7 @@ export function Profile(props: Props) {
           style={{
             marginVertical: 20,
             alignItems: 'center',
-          }}
-        >
+          }}>
           <View style={{ marginBottom: 2.5, position: 'relative', padding: 7.5 }}>
             <TouchableOpacity disabled={isSelf} activeOpacity={0.7} onPress={selectImage}>
               <Avatar userID={props.route.params.user.id} size={100} />
@@ -195,8 +200,7 @@ export function Profile(props: Props) {
                 justifyContent: 'center',
                 flexDirection: 'row',
                 alignItems: 'center',
-              }}
-            >
+              }}>
               <TextInput
                 style={styles.input}
                 placeholder="Nickname"
@@ -225,8 +229,7 @@ export function Profile(props: Props) {
                       await userRepository.save(props.route.params.user)
 
                       props.setNameDispatch(props.route.params.user.id, name)
-                    }}
-                  >
+                    }}>
                     <Icon name="save" color="white" />
                   </TouchableOpacity>
                 </View>
@@ -249,8 +252,7 @@ export function Profile(props: Props) {
                 visibilityTime: 1500,
               })
               Clipboard.setString(props.route.params.user.id)
-            }}
-          >
+            }}>
             <Text style={{ color: theme.colors.text, fontSize: 19 }}>
               {props.route.params.user.id}
             </Text>
@@ -267,16 +269,14 @@ export function Profile(props: Props) {
             style={{
               flexDirection: 'column',
               marginTop: 20,
-            }}
-          >
+            }}>
             <Text
               style={{
                 textAlign: 'center',
                 color: theme.colors.text,
                 marginVertical: 15,
                 fontSize: 25,
-              }}
-            >
+              }}>
               Settings
             </Text>
             <View style={styles.rowContainer}>
@@ -297,32 +297,13 @@ export function Profile(props: Props) {
                 value={theme.dark}
               />
             </View>
-            <View style={styles.rowContainer}>
-              <Text style={{ color: theme.colors.text }}>GF mode</Text>
-              <Switch
-                trackColor={{
-                  false: lightenDarkenColor(
-                    theme.colors.primary,
-                    100 * (theme.dark ? -1 : 1)
-                  ),
-                  true: lightenDarkenColor(
-                    theme.colors.primary,
-                    100 * (theme.dark ? -1 : 1)
-                  ),
-                }}
-                thumbColor={theme.colors.primary}
-                onValueChange={() => console.log('GF')}
-                value={false}
-              />
-            </View>
 
             <View
               style={{
                 marginTop: 30,
                 alignSelf: 'center',
                 width: '60%',
-              }}
-            >
+              }}>
               <Button
                 onPress={() => {
                   Alert.alert(
@@ -354,6 +335,29 @@ export function Profile(props: Props) {
                 color={theme.colors.primary}
               />
             </View>
+            <View
+              style={{
+                alignItems: 'center',
+                marginTop: 40,
+              }}>
+              <View style={{ flexDirection: 'row', marginVertical: 20 }}>
+                <Text style={{ color: theme.colors.text, marginRight: 5 }}>
+                  Made with ❤️ by
+                </Text>
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  onPress={() => Linking.openURL('https://tarasa24.dev')}>
+                  <Text style={{ color: theme.colors.text, fontWeight: 'bold' }}>
+                    Tarasa24
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                activeOpacity={0.6}
+                onPress={() => Linking.openURL('https://github.com/Tarasa24/PGPChatApp')}>
+                <Icon name="logo-github" color={theme.colors.text} />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
 
@@ -365,8 +369,7 @@ export function Profile(props: Props) {
                 color: theme.colors.text,
                 marginVertical: 15,
                 fontSize: 25,
-              }}
-            >
+              }}>
               Gallery
             </Text>
             <Gallery route={{ params: { user: props.route.params.user } }} />
