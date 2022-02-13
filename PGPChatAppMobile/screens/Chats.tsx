@@ -1,7 +1,8 @@
 import { useNavigation } from '@react-navigation/native'
-import React, { useEffect, useState } from 'react'
+import React, { PureComponent, useEffect, useState } from 'react'
 import {
   ActivityIndicator,
+  FlatList,
   NativeModules,
   Platform,
   RefreshControl,
@@ -20,7 +21,7 @@ import { File, Message, MessageStatus, User } from '../assets/ts/orm'
 import Avatar from '../components/Avatar'
 import ChatsHeader from '../components/ChatsHeader'
 import { useTheme } from '../components/ThemeContext'
-import { LocalUserState } from '../store/reducers/localUserReducer'
+import localUserReducer, { LocalUserState } from '../store/reducers/localUserReducer'
 import * as Chat from './Chat'
 import Time from '../components/Time'
 import { socket } from '../assets/ts/socketio'
@@ -31,6 +32,132 @@ interface Props {
   userNames: Map<string, string>
 }
 
+interface Others {
+  user: User
+  lastMessage: Message | null
+}
+
+class ListItem extends PureComponent<{
+  other: Others
+  self: User
+  navigation: any
+  theme: any
+}> {
+  render() {
+    const { other, self, navigation, theme } = this.props
+    function highlightNewMessage(msg: Message) {
+      function messageText(msg: Message) {
+        if (msg.files && msg.files.length > 0) {
+          let out =
+            msg.files.length === 1
+              ? '📎 ' + msg.text
+              : msg.files.length + '📎 ' + msg.text
+          if (msg.text === '')
+            out += msg.files
+              .map((f) => {
+                return f.name
+              })
+              .join(' ')
+
+          return out
+        } else return msg.text
+      }
+
+      if (msg) {
+        if (msg.status === MessageStatus.recieved && msg.recipient.id === self.id)
+          return (
+            <Text
+              style={{
+                color: theme.colors.text,
+              }}
+              numberOfLines={1}>
+              {messageText(msg)}
+            </Text>
+          )
+        else {
+          return (
+            <Text style={{ color: 'grey' }} numberOfLines={1}>
+              {messageText(msg)}
+            </Text>
+          )
+        }
+      } else return <Text />
+    }
+
+    function statusIcon(lastMessage: Message | null) {
+      switch (lastMessage.status) {
+        case MessageStatus.sending:
+          return <Icon name="cloud-upload" size={15} color="grey" />
+        case MessageStatus.sent:
+          return <Icon name="cloud-done" size={15} color="grey" />
+        case MessageStatus.recieved:
+          return <Icon name="radio-button-off" size={15} color="grey" />
+        case MessageStatus.read:
+          return <Icon name="checkmark-circle-outline" size={15} color="grey" />
+      }
+    }
+
+    return (
+      <TouchableOpacity
+        key={other.user.id}
+        activeOpacity={0.7}
+        onPress={() =>
+          navigation.navigate('Chat', {
+            participants: { self: self, other: other.user },
+          } as Chat.RouteParams)
+        }>
+        <View style={styles.row}>
+          <View style={{ paddingHorizontal: 5, position: 'relative' }}>
+            <Avatar userID={other.user.id} size={60} />
+            {other.lastMessage ? (
+              other.lastMessage.status === MessageStatus.recieved &&
+              other.lastMessage.recipient.id === self.id ? (
+                <View
+                  style={{
+                    backgroundColor: 'orange',
+                    borderRadius: 100,
+                    width: 27.5,
+                    height: 27.5,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'absolute',
+                    right: 0,
+                    zIndex: 9,
+                  }}>
+                  <Icon name="alert" color="white" size={20} />
+                </View>
+              ) : null
+            ) : null}
+          </View>
+
+          <View style={styles.text}>
+            <Text
+              style={{
+                fontWeight: 'bold',
+                fontSize: 18,
+                color: theme.colors.text,
+              }}
+              numberOfLines={1}>
+              {other.user.name ? other.user.name : other.user.id}
+            </Text>
+            {highlightNewMessage(other.lastMessage)}
+          </View>
+          <View style={styles.status}>
+            {other.lastMessage && (
+              <Time
+                timestamp={other.lastMessage.timestamp}
+                style={{ color: theme.colors.text }}
+              />
+            )}
+
+            {other.lastMessage ? statusIcon(other.lastMessage) : null}
+          </View>
+        </View>
+      </TouchableOpacity>
+    )
+  }
+}
+
 function Chats(props: Props) {
   const navigation = useNavigation()
   const theme = useTheme()
@@ -38,11 +165,6 @@ function Chats(props: Props) {
   enum Stage {
     Loading,
     Loaded,
-  }
-
-  interface Others {
-    user: User
-    lastMessage: Message | null
   }
 
   interface Users {
@@ -61,6 +183,7 @@ function Chats(props: Props) {
     const self = await userRepository.findOneOrFail({
       id: props.localUser.id,
     })
+
     const allUsers = await userRepository.find({
       where: { id: Not(props.localUser.id) },
     })
@@ -107,68 +230,15 @@ function Chats(props: Props) {
     navigation.setOptions({
       header: () => <ChatsHeader />,
     })
+  })
 
-    setStage(Stage.Loading)
+  useEffect(() => {
     prepareChats()
       .then(() => setStage(Stage.Loaded))
       .catch(() => setStage(Stage.Loaded))
   }, [props.messageUpdatesList, props.userNames])
 
-  function statusIcon(lastMessage: Message | null) {
-    switch (lastMessage.status) {
-      case MessageStatus.sending:
-        return <Icon name="cloud-upload" size={15} color="grey" />
-      case MessageStatus.sent:
-        return <Icon name="cloud-done" size={15} color="grey" />
-      case MessageStatus.recieved:
-        return <Icon name="radio-button-off" size={15} color="grey" />
-      case MessageStatus.read:
-        return <Icon name="checkmark-circle-outline" size={15} color="grey" />
-    }
-  }
-
   function getChats() {
-    function messageText(msg: Message) {
-      if (msg.files && msg.files.length > 0) {
-        let out =
-          msg.files.length === 1 ? '📎 ' + msg.text : msg.files.length + '📎 ' + msg.text
-        if (msg.text === '')
-          out += msg.files
-            .map((f) => {
-              return f.name
-            })
-            .join(' ')
-
-        return out
-      } else return msg.text
-    }
-
-    function highlightNewMessage(msg: Message) {
-      if (msg) {
-        if (
-          msg.status === MessageStatus.recieved &&
-          msg.recipient.id === props.localUser.id
-        )
-          return (
-            <Text
-              style={{
-                color: theme.colors.text,
-              }}
-              numberOfLines={1}
-            >
-              {messageText(msg)}
-            </Text>
-          )
-        else {
-          return (
-            <Text style={{ color: 'grey' }} numberOfLines={1}>
-              {messageText(msg)}
-            </Text>
-          )
-        }
-      } else return <Text />
-    }
-
     if (stage === Stage.Loading) {
       return (
         <View style={{ minHeight: '100%', justifyContent: 'center' }}>
@@ -176,92 +246,20 @@ function Chats(props: Props) {
         </View>
       )
     } else if (stage === Stage.Loaded) {
-      if (users.others.length > 0) {
-        let chats: Element[] = []
-
-        for (const other of users.others) {
-          chats.push(
-            <TouchableOpacity
-              key={other.user.id}
-              activeOpacity={0.7}
-              onPress={() =>
-                navigation.navigate('Chat', {
-                  participants: { self: users.self, other: other.user },
-                } as Chat.RouteParams)
-              }
-            >
-              <View style={styles.row}>
-                <View style={{ paddingHorizontal: 5, position: 'relative' }}>
-                  <Avatar userID={other.user.id} size={60} />
-                  {other.lastMessage ? (
-                    other.lastMessage.status === MessageStatus.recieved &&
-                    other.lastMessage.recipient.id === props.localUser.id ? (
-                      <View
-                        style={{
-                          backgroundColor: 'orange',
-                          borderRadius: 100,
-                          width: 27.5,
-                          height: 27.5,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          position: 'absolute',
-                          right: 0,
-                          zIndex: 9,
-                        }}
-                      >
-                        <Icon name="alert" color="white" size={20} />
-                      </View>
-                    ) : null
-                  ) : null}
-                </View>
-
-                <View style={styles.text}>
-                  <Text
-                    style={{
-                      fontWeight: 'bold',
-                      fontSize: 18,
-                      color: theme.colors.text,
-                    }}
-                    numberOfLines={1}
-                  >
-                    {other.user.name ? other.user.name : other.user.id}
-                  </Text>
-                  {highlightNewMessage(other.lastMessage)}
-                </View>
-                <View style={styles.status}>
-                  {other.lastMessage && (
-                    <Time
-                      timestamp={other.lastMessage.timestamp}
-                      style={{ color: theme.colors.text }}
-                    />
-                  )}
-
-                  {other.lastMessage ? statusIcon(other.lastMessage) : null}
-                </View>
-              </View>
-            </TouchableOpacity>
+      if (users.others.length > 0 && users.self) {
+        function generate({ item, index }) {
+          return (
+            <ListItem
+              other={item}
+              self={users.self}
+              theme={theme}
+              navigation={navigation}
+            />
           )
         }
-        return (
-          <ScrollView
-            style={{ minHeight: '100%' }}
-            refreshControl={
-              <RefreshControl
-                refreshing={false}
-                colors={[theme.colors.primary]}
-                progressBackgroundColor={lightenDarkenColor(theme.colors.background, 50)}
-                onRefresh={() => {
-                  setStage(Stage.Loading)
-                  if (socket.connected) socket.disconnect()
-                  socket.connect()
 
-                  prepareChats()
-                    .then(() => setStage(Stage.Loaded))
-                    .catch(() => setStage(Stage.Loaded))
-                }}
-              />
-            }
-          >
+        return (
+          <View>
             <View style={styles.search}>
               <TextInput
                 style={{
@@ -284,8 +282,31 @@ function Chats(props: Props) {
                 )}
               />
             </View>
-            {chats}
-          </ScrollView>
+            <FlatList
+              data={users.others}
+              renderItem={generate}
+              keyExtractor={(item) => item.user.id}
+              refreshControl={
+                <RefreshControl
+                  refreshing={false}
+                  colors={[theme.colors.primary]}
+                  progressBackgroundColor={lightenDarkenColor(
+                    theme.colors.background,
+                    50
+                  )}
+                  onRefresh={() => {
+                    setStage(Stage.Loading)
+                    if (socket.connected) socket.disconnect()
+                    socket.connect()
+
+                    prepareChats()
+                      .then(() => setStage(Stage.Loaded))
+                      .catch(() => setStage(Stage.Loaded))
+                  }}
+                />
+              }
+            />
+          </View>
         )
       } else
         return (
@@ -294,8 +315,7 @@ function Chats(props: Props) {
               minHeight: '100%',
               justifyContent: 'center',
               alignItems: 'center',
-            }}
-          >
+            }}>
             <Icon name="search" color={theme.colors.primary} size={60} />
             <Text style={{ color: theme.colors.text }}>
               Time to find someone to talk to
@@ -306,16 +326,15 @@ function Chats(props: Props) {
   }
 
   return (
-    <View style={{ backgroundColor: theme.colors.background }}>
+    <View style={{ backgroundColor: theme.colors.background, minHeight: '100%' }}>
       {getChats()}
 
       <View
         style={{
           position: 'absolute',
-          bottom: 10,
+          bottom: 100,
           right: 10,
-        }}
-      >
+        }}>
         <TouchableHighlight
           underlayColor={lightenDarkenColor(
             theme.colors.primary,
@@ -331,8 +350,7 @@ function Chats(props: Props) {
             height: 65,
             backgroundColor: theme.colors.primary,
             borderRadius: 100,
-          }}
-        >
+          }}>
           <Icon name="add" size={30} color="white" />
         </TouchableHighlight>
       </View>
