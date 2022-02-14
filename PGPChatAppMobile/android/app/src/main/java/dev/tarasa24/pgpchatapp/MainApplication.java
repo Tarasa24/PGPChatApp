@@ -8,7 +8,6 @@ import org.devio.rn.splashscreen.SplashScreenReactPackage;
 import com.oney.WebRTCModule.WebRTCModulePackage;
 import com.vinzscam.reactnativefileviewer.RNFileViewerPackage;
 import com.brentvatne.react.ReactVideoPackage;
-import io.expo.appearance.RNCAppearancePackage;
 import com.dieam.reactnativepushnotification.ReactNativePushNotificationPackage;
 import com.reactnativerestart.RestartPackage;
 import com.horcrux.svg.SvgPackage;

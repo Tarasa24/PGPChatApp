@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { ColorSchemeName } from 'react-native-appearance'
+import { ColorSchemeName } from 'react-native'
 import { lightTheme, darkTheme } from '../assets/ts/ColorThemes'
 import { connect } from 'react-redux'
 

@@ -42,7 +42,6 @@ import DocumentPicker from 'react-native-document-picker'
 import Video from 'react-native-video'
 import RNFetchBlob from 'rn-fetch-blob'
 import * as Compressor from 'react-native-compressor'
-import * as pickedGifReducer from '../store/reducers/pickedGifReducer'
 
 export interface RouteParams {
   participants: {
@@ -58,8 +57,6 @@ interface Props {
   localUser: LocalUserState
   messageUpdatesList: string[]
   addToMessageUpdateList: (messageId: string | string[]) => void
-  pickedGif: InlineFile
-  dropPickedGif: () => void
 }
 
 export interface InlineFile {
@@ -134,13 +131,6 @@ function Chat(props: Props) {
   const [inputState, setInputState] = useState('')
 
   const [addFileMenuOpened, setAddFileMenuOpened] = useState(false)
-
-  useEffect(() => {
-    if (Object.keys(props.pickedGif).length != 0) {
-      setInlineFiles([...inlineFiles, props.pickedGif])
-      props.dropPickedGif()
-    }
-  }, [props.pickedGif])
 
   async function loadMessages(youngerThan = null) {
     const messageRepository = getRepository(Message)
@@ -684,36 +674,6 @@ function Chat(props: Props) {
 
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => navigation.navigate('GifPicker')}>
-                <View
-                  style={{
-                    ...styles.addFileMenuItem,
-                    backgroundColor: lightenDarkenColor(
-                      theme.colors.background,
-                      25 * (theme.dark ? 1 : -1)
-                    ),
-                  }}>
-                  <Text
-                    style={{
-                      fontWeight: 'bold',
-                      color: theme.colors.text,
-                      fontSize: 32,
-                      lineHeight: 64,
-                    }}>
-                    GIF
-                  </Text>
-                  <Text
-                    style={{
-                      ...styles.addFileMenuItemText,
-                      color: theme.colors.text,
-                    }}>
-                    GIF
-                  </Text>
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                activeOpacity={0.7}
                 onPress={async () => {
                   try {
                     const res = await DocumentPicker.pickMultiple({
@@ -815,7 +775,6 @@ const styles = StyleSheet.create({
 const mapStateToProps = (state: any) => ({
   localUser: state.localUserReducer,
   messageUpdatesList: state.messageUpdatesListReducer,
-  pickedGif: state.pickedGifReducer,
 })
 
 const mapDispatchToProps = (dispatch: any) => ({
@@ -824,12 +783,6 @@ const mapDispatchToProps = (dispatch: any) => ({
       type: 'ADD_TO_MESSAGE_UPDATES_LIST',
       payload: { messageID: messageId },
     } as messageUpdatesListReducer.Action)
-  },
-  dropPickedGif: () => {
-    dispatch({
-      type: 'DROP_PICKED_GIF',
-      payload: {},
-    } as pickedGifReducer.Action)
   },
 })
 

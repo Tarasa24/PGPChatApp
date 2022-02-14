@@ -1,11 +1,11 @@
-import { Appearance } from 'react-native-appearance'
+import { Appearance } from 'react-native'
 import { Action } from 'redux'
+
+Appearance.getColorScheme()
 
 const initialState = {
   colorScheme:
-    Appearance.getColorScheme() === 'no-preference'
-      ? 'light'
-      : Appearance.getColorScheme(),
+    Appearance.getColorScheme() === null ? 'light' : Appearance.getColorScheme(),
 }
 
 export default function colorSchemeReducer(state = initialState, action: Action) {
