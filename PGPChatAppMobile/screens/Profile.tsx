@@ -28,6 +28,8 @@ import * as userAvatarsReducer from '../store/reducers/userAvatarsReducer'
 import RNFetchBlob from 'rn-fetch-blob'
 import * as userNamesReducer from '../store/reducers/userNamesReducer'
 import Gallery from './Gallery'
+import { navigate } from '../assets/ts/navigation'
+import { useNavigation } from '@react-navigation/native'
 
 export interface RouteParams {
   user: User
@@ -48,6 +50,7 @@ interface Props {
 
 export function Profile(props: Props) {
   const theme = useTheme()
+  const navigation = useNavigation()
 
   const isSelf = props.route.params.user.id === props.localUser.id
 
@@ -245,19 +248,13 @@ export function Profile(props: Props) {
               marginTop: 10,
             }}
             onPress={() => {
-              Toast.show({
-                type: 'info',
-                position: 'bottom',
-                text1: 'ChatApp ID copied',
-                visibilityTime: 1500,
-              })
-              Clipboard.setString(props.route.params.user.id)
+              navigation.navigate('QRCode', { userID: props.route.params.user.id })
             }}>
             <Text style={{ color: theme.colors.text, fontSize: 19 }}>
               {props.route.params.user.id}
             </Text>
             <Icon
-              name="copy"
+              name="finger-print"
               size={21}
               style={{ marginLeft: 10 }}
               color={theme.colors.text}

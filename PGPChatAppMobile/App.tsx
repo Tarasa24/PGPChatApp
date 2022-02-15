@@ -20,6 +20,8 @@ import PreviewFile from './screens/PreviewFile'
 import ImportPK from './screens/ImportPK'
 import LandingPage from './screens/LandingPage'
 import GenerateAccount from './screens/GenerateAccount'
+import QRCode from './screens/QRCode'
+import QRCodeScanner from './screens/QRCodeScanner'
 
 // Import custom
 import { ThemeProvider, useTheme } from './components/ThemeContext'
@@ -155,6 +157,16 @@ export default function App() {
                         name="Profile"
                         component={Profile}
                         options={{ header: () => <Header title="Profile" /> }}
+                      />
+                      <Stack.Screen
+                        name="QRCode"
+                        component={QRCode}
+                        options={{ header: () => <Header title="QR Code" /> }}
+                      />
+                      <Stack.Screen
+                        name="QRCodeScanner"
+                        component={QRCodeScanner}
+                        options={{ header: () => <Header title="Scanner" /> }}
                       />
                       <Stack.Screen name="Chat" component={Chat} />
                       <Stack.Screen

@@ -340,7 +340,7 @@ function Chats(props: Props) {
             theme.colors.primary,
             30 * (theme.dark ? -1 : 1)
           )}
-          onPress={() => navigation.navigate('AddUser')}
+          onPress={() => navigation.navigate('AddUser', {})}
           style={{
             borderWidth: 1,
             borderColor: 'rgba(0,0,0,0.2)',

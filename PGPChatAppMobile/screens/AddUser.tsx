@@ -10,9 +10,16 @@ import { useTheme } from '../components/ThemeContext'
 import { LocalUserState } from '../store/reducers/localUserReducer'
 import Waves from '../components/svg/Waves'
 import WavesDark from '../components/svg/Waves-dark'
+import Icon from 'react-native-ionicons'
+import { TouchableOpacity } from 'react-native-gesture-handler'
 
 interface Props {
   localUser: LocalUserState
+  route: {
+    params: {
+      userID: string
+    }
+  }
 }
 
 function AddUser(props: Props) {
@@ -20,7 +27,7 @@ function AddUser(props: Props) {
   const navigation = useNavigation()
   const inputRef = useRef<TextInput>()
 
-  const [inputState, setInputState] = useState('')
+  const [inputState, setInputState] = useState(props.route.params.userID)
 
   async function addUser() {
     const id = inputState
@@ -81,7 +88,7 @@ function AddUser(props: Props) {
     } catch (error) {
       Toast.show({
         type: 'error',
-        position: 'top',
+        position: 'bottom',
         text1: 'Error looking up a User',
         text2: error,
         autoHide: false,
@@ -90,23 +97,32 @@ function AddUser(props: Props) {
   }
 
   return (
-    <View style={{ backgroundColor: theme.colors.background }}>
+    <View style={{ backgroundColor: theme.colors.background, minHeight: '100%' }}>
       {!theme.dark ? <Waves style={styles.waves} /> : <WavesDark style={styles.waves} />}
       <View
         style={{
-          minHeight: '100%',
           marginHorizontal: 20,
           justifyContent: 'center',
-        }}
-      >
+        }}>
         <TextInput
           style={styles.input}
-          placeholder="ChatApp Adress"
+          placeholder="PGPChatApp ID"
           ref={inputRef}
           onChangeText={(change) => setInputState(change)}
+          value={inputState}
         />
         <Button onPress={() => addUser()} title="Add" color={theme.colors.primary} />
+
+        <TouchableOpacity
+          activeOpacity={0.6}
+          onPress={() => navigation.navigate('QRCodeScanner')}>
+          <View style={{ alignItems: 'center', marginTop: 40 }}>
+            <Icon name="qr-scanner" color={theme.colors.text} size={60} />
+            <Text style={{ color: theme.colors.text }}>Scan QR Code</Text>
+          </View>
+        </TouchableOpacity>
       </View>
+
       <Toast ref={(ref) => Toast.setRef(ref)} style={{ zIndex: 2 }} />
     </View>
   )
@@ -133,9 +149,8 @@ const styles = StyleSheet.create({
   waves: {
     zIndex: 1,
     transform: [{ scale: 0.65 }],
-    position: 'absolute',
+    position: 'relative',
     left: -500,
     top: -85,
-    marginBottom: -80,
   },
 })
