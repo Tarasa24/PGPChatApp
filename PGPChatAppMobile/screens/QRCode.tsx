@@ -62,7 +62,7 @@ export default function QRCode(props: Props) {
           Toast.show({
             type: 'info',
             position: 'bottom',
-            text1: 'ID copied',
+            text1: 'PGPChatApp ID has been copied',
             visibilityTime: 1500,
           })
           Clipboard.setString(props.route.params.userID)
@@ -79,6 +79,8 @@ export default function QRCode(props: Props) {
           />
         </View>
       </TouchableOpacity>
+
+      <Toast ref={(ref) => Toast.setRef(ref)} style={{ zIndex: 2, bottom: 40 }} />
     </View>
   )
 }

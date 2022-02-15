@@ -123,7 +123,7 @@ function AddUser(props: Props) {
         </TouchableOpacity>
       </View>
 
-      <Toast ref={(ref) => Toast.setRef(ref)} style={{ zIndex: 2 }} />
+      <Toast ref={(ref) => Toast.setRef(ref)} style={{ zIndex: 2, bottom: 40 }} />
     </View>
   )
 }
