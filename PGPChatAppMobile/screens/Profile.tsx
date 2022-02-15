@@ -142,15 +142,26 @@ export function Profile(props: Props) {
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() =>
-              // Add confirmation
-              getRepository(User)
-                .findOneOrFail({
-                  id: props.route.params.user.id,
-                })
-                .then((localUser) => {
-                  props.dropAvatar(localUser.id)
-                  removeImageFromUser(localUser)
-                })
+              Alert.alert(
+                'Remove profile image',
+                'Are you sure you want to clear this image?',
+                [
+                  { text: 'No', style: 'cancel' },
+                  {
+                    text: 'Yes',
+                    style: 'default',
+                    onPress: () =>
+                      getRepository(User)
+                        .findOneOrFail({
+                          id: props.route.params.user.id,
+                        })
+                        .then((localUser) => {
+                          props.dropAvatar(localUser.id)
+                          removeImageFromUser(localUser)
+                        }),
+                  },
+                ]
+              )
             }>
             <View
               style={{
