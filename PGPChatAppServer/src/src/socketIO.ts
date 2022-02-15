@@ -212,6 +212,13 @@ export default function (io: Server) {
               id: data.messageId,
             },
           })
+        } else if (data.action === 'BLOCK_DROP') {
+          await MessagesQueue.destroy({
+            where: {
+              id: data.messageId,
+            },
+          })
+          return
         }
 
         const now = Date.now()

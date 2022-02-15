@@ -66,6 +66,12 @@ PushNotification.configure({
 
     switch (data.COMMAND) {
       case 'NEW_MESSAGE':
+        // Ignore notification if the user is on blacklist
+        if (
+          store.getState().blocklistReducer.includes(data.PAYLOAD.recievedNotificationTo)
+        )
+          return
+
         if (data.PAYLOAD.id !== null) {
           const nonce = await fetchRest(
             '/keyserver/getNonce/' + store.getState().localUserReducer.id
@@ -132,6 +138,9 @@ PushNotification.configure({
         PushNotification.removeAllDeliveredNotifications()
         break
       case 'INCOMING_CALL':
+        // Ignore notification if the user is on blacklist
+        if (store.getState().blocklistReducer.includes(data.PAYLOAD.caller)) return
+
         const res = await fetchRest('/call/' + data.PAYLOAD.callee)
 
         if (res.info().status === 200) {

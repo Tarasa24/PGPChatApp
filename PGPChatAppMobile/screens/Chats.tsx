@@ -25,11 +25,13 @@ import localUserReducer, { LocalUserState } from '../store/reducers/localUserRed
 import * as Chat from './Chat'
 import Time from '../components/Time'
 import { socket } from '../assets/ts/socketio'
+import { store } from '../store/store'
 
 interface Props {
   localUser: LocalUserState
   messageUpdatesList: string[]
   userNames: Map<string, string>
+  blocklist: string[]
 }
 
 interface Others {
@@ -42,9 +44,10 @@ class ListItem extends PureComponent<{
   self: User
   navigation: any
   theme: any
+  blocklist: string[]
 }> {
   render() {
-    const { other, self, navigation, theme } = this.props
+    const { other, self, navigation, theme, blocklist } = this.props
     function highlightNewMessage(msg: Message) {
       function messageText(msg: Message) {
         if (msg.files && msg.files.length > 0) {
@@ -136,6 +139,9 @@ class ListItem extends PureComponent<{
                 fontWeight: 'bold',
                 fontSize: 18,
                 color: theme.colors.text,
+                textDecorationLine: blocklist.includes(other.user.id)
+                  ? 'line-through'
+                  : 'none',
               }}
               numberOfLines={1}>
               {other.user.name ? other.user.name : other.user.id}
@@ -254,6 +260,7 @@ function Chats(props: Props) {
               self={users.self}
               theme={theme}
               navigation={navigation}
+              blocklist={props.blocklist}
             />
           )
         }
@@ -362,6 +369,7 @@ const mapStateToProps = (state: any) => ({
   localUser: state.localUserReducer,
   messageUpdatesList: state.messageUpdatesListReducer,
   userNames: state.userNamesReducer,
+  blocklist: state.blocklistReducer,
 })
 
 const mapDispatchToProps = (dispatch: any) => ({})

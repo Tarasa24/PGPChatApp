@@ -7,6 +7,7 @@ import userAvatarsReducer from './userAvatarsReducer'
 import messageUpdatesListReducer from './messageUpdatesListReducer'
 import socketConnectedReducer from './socketConnectedReducer'
 import userNamesReducer from './userNamesReducer'
+import blocklistReducer from './blocklistReducer'
 
 // Redux: Root Reducer
 const rootReducer = combineReducers({
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
   messageUpdatesListReducer,
   socketConnectedReducer,
   userNamesReducer,
+  blocklistReducer,
 })
 // Exports
 export default rootReducer

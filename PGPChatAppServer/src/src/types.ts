@@ -31,7 +31,12 @@ export type MessageUpdatePayload = {
   to: UserID
   from: UserID
   messageId: string
-  action: 'SET_STATUS_SENT' | 'SET_STATUS_RECIEVED' | 'SET_STATUS_READ' | 'DELETE'
+  action:
+    | 'SET_STATUS_SENT'
+    | 'SET_STATUS_RECIEVED'
+    | 'SET_STATUS_READ'
+    | 'DELETE'
+    | 'BLOCK_DROP'
   timestamp: number
 }
 

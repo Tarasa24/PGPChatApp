@@ -35,7 +35,12 @@ export type MessageUpdatePayload = {
   to: UserID
   from: UserID
   messageId: string
-  action: 'SET_STATUS_SENT' | 'SET_STATUS_RECIEVED' | 'SET_STATUS_READ' | 'DELETE'
+  action:
+    | 'SET_STATUS_SENT'
+    | 'SET_STATUS_RECIEVED'
+    | 'SET_STATUS_READ'
+    | 'DELETE'
+    | 'BLOCK_DROP'
   timestamp?: number
 }
 
@@ -151,6 +156,15 @@ async function connect() {
     const messageRepository = getRepository(ORM.Message)
     const userRepository = getRepository(ORM.User)
 
+    // If contact is on blocklist, tell server to delete the message
+    if (store.getState().blocklistReducer.includes(payload.from)) {
+      socket.emit('messageUpdate', {
+        action: 'BLOCK_DROP',
+        messageId: payload.id,
+        to: null,
+      } as MessageUpdatePayload & { to: string })
+      return
+    }
     // If recieved duplicate message, silently drop
     const messageAlreadyExists = (await messageRepository.count({ id: payload.id })) !== 0
     if (messageAlreadyExists) return
