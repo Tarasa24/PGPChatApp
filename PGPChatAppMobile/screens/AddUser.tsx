@@ -39,6 +39,9 @@ function AddUser(props: Props) {
     const userRepository = getRepository(User)
 
     try {
+      if (id === props.localUser.id)
+        throw "Well, you don't need to look up yourself, do ya?"
+
       // Fetch from server
       const res = await fetchRest('/keyserver/lookup/' + id)
 
