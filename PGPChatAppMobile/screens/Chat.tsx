@@ -16,6 +16,7 @@ import {
   ToastAndroid,
   RefreshControl,
   FlatList,
+  Linking,
 } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-ionicons'
@@ -672,6 +673,35 @@ function Chat(props: Props) {
                 </View>
               </TouchableOpacity>
 
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => Linking.openURL('https://giphy.com')}>
+                <View
+                  style={{
+                    ...styles.addFileMenuItem,
+                    backgroundColor: lightenDarkenColor(
+                      theme.colors.background,
+                      25 * (theme.dark ? 1 : -1)
+                    ),
+                  }}>
+                  <Text
+                    style={{
+                      fontWeight: 'bold',
+                      color: theme.colors.text,
+                      fontSize: 32,
+                      lineHeight: 64,
+                    }}>
+                    GIF
+                  </Text>
+                  <Text
+                    style={{
+                      ...styles.addFileMenuItemText,
+                      color: theme.colors.text,
+                    }}>
+                    GIF
+                  </Text>
+                </View>
+              </TouchableOpacity>
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={async () => {
