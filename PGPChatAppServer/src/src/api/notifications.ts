@@ -122,8 +122,6 @@ interface AckBody {
  */
 router.post('/ack', async (req: Request<{}, {}, AckBody>, res) => {
   try {
-    console.log(req.body.id)
-
     // Syntax check
     if (
       !req.body.id ||

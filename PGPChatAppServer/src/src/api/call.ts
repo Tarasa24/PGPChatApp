@@ -51,8 +51,6 @@ interface WebRTCReqBody {
 router.post('/end', async (req: Request<{}, {}, WebRTCReqBody>, res) => {
   try {
     // Syntax check
-    console.log(req.body)
-
     if (!req.body.id || !req.body.signature) {
       res.sendStatus(400)
       return
