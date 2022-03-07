@@ -9,6 +9,9 @@ import router from './router.js'
 
 import { sequelize } from './models.js'
 import initPeerServer from './peerjs.js'
+import dotenv from 'dotenv'
+
+if (process.env.NODE_ENV !== 'production') dotenv.config({ path: '../.env' })
 
 const app = express()
 app.use(express.json())

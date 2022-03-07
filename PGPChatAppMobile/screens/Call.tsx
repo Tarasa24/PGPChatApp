@@ -9,10 +9,11 @@ import { CallPayload, socket } from '../assets/ts/socketio'
 import Avatar from '../components/Avatar'
 import { useTheme } from '../components/ThemeContext'
 import { store } from '../store/store'
-import DeviceInfo from 'react-native-device-info'
 import RNSoundLevel from 'react-native-sound-level'
 import Animated, { Easing } from 'react-native-reanimated'
 import Svg, { Circle } from 'react-native-svg'
+import { fetchRest } from '../assets/ts/api'
+import OpenPGP from 'react-native-fast-openpgp'
 
 export interface RouteParams {
   caller: string
@@ -120,8 +121,8 @@ export default function Call(props: Props) {
   }
 
   function handleDataConnection(connection) {
-    setDataConnection(connection)
-    connection.on('open', () =>
+    connection.on('open', () => {
+      setDataConnection(connection)
       connection.on('data', (data: string) => {
         switch (data) {
           case 'endCall':
@@ -147,45 +148,75 @@ export default function Call(props: Props) {
             break
         }
       })
-    )
-  }
-
-  const peerConfig = {
-    host: __DEV__
-      ? DeviceInfo.isEmulatorSync()
-        ? '10.0.2.2'
-        : 'localhost'
-      : 'chatapp.tarasa24.dev',
-    port: __DEV__ ? 5000 : 443,
-    secure: !__DEV__,
-    path: __DEV__ ? '/peerjs' : '/app-api/peerjs',
-    debug: 1,
+    })
   }
 
   useEffect(() => {
-    const peer = new Peer(
-      amICaller ? props.route.params.callerPeerToken : props.route.params.calleePeerToken,
-      peerConfig
-    )
-    setPeer(peer)
-    setupLocalStream().then((localStream) => {
-      if (amICaller) {
-        peer.on('call', (call) => {
-          call.answer(localStream)
-          handleCall(call)
-        })
-        peer.on('connection', (conn) => handleDataConnection(conn))
-      } else {
-        handleCall(peer.call(props.route.params.callerPeerToken, localStream))
-        handleDataConnection(peer.connect(props.route.params.callerPeerToken))
-      }
-    })
+    ;(async function () {
+      const nonce = await fetchRest(
+        '/keyserver/getNonce/' + store.getState().localUserReducer.id
+      )
+      let TURNCredentials = await fetchRest('/call/getTURNCredentials', 'POST', {
+        id: store.getState().localUserReducer.id,
+        signature: await OpenPGP.sign(
+          await nonce.text(),
+          store.getState().localUserReducer.publicKey,
+          store.getState().localUserReducer.privateKey,
+          ''
+        ),
+      })
 
-    peer.on('error', (e) => {
-      console.error(e)
-      setStop(true)
-      navigation.goBack()
-    })
+      TURNCredentials = TURNCredentials.json()
+
+      const peerConfig = {
+        host: __DEV__ ? 'localhost' : 'chatapp.tarasa24.dev',
+        port: __DEV__ ? 5000 : 443,
+        secure: !__DEV__,
+        path: __DEV__ ? '/peerjs' : '/app-api/peerjs',
+        debug: 1,
+        config: {
+          iceServers: [
+            {
+              url: 'stun:turnserver.chatapp.tarasa24.dev:3478',
+            },
+            {
+              urls: [
+                'turn:turnserver.chatapp.tarasa24.dev:3478?transport=udp',
+                'turn:turnserver.chatapp.tarasa24.dev:3478?transport=tcp',
+              ],
+              username: TURNCredentials['username'],
+              credential: TURNCredentials['password'],
+            },
+          ],
+        },
+      }
+
+      const peer = new Peer(
+        amICaller
+          ? props.route.params.callerPeerToken
+          : props.route.params.calleePeerToken,
+        peerConfig
+      )
+      setPeer(peer)
+      setupLocalStream().then((localStream) => {
+        if (amICaller) {
+          peer.on('call', (call) => {
+            call.answer(localStream)
+            handleCall(call)
+          })
+          peer.on('connection', (conn) => handleDataConnection(conn))
+        } else {
+          handleCall(peer.call(props.route.params.callerPeerToken, localStream))
+          handleDataConnection(peer.connect(props.route.params.callerPeerToken))
+        }
+      })
+
+      peer.on('error', (e) => {
+        console.error(e)
+        setStop(true)
+        navigation.goBack()
+      })
+    })()
 
     RNSoundLevel.start()
     RNSoundLevel.onNewFrame = (data) => {

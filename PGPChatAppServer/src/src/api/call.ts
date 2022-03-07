@@ -1,3 +1,4 @@
+import { createHmac } from 'crypto'
 import express, { Request } from 'express'
 import Sequelize from 'sequelize'
 import { verifyNonceSignature } from '../helperFunctions.js'
@@ -176,7 +177,6 @@ router.post('/accept', async (req: Request<{}, {}, WebRTCReqBody>, res) => {
  *       500:
  *         description: Returns json describing the error
  */
-
 router.get('/:id', async (req: Request<{ id: string }, {}, {}>, res) => {
   try {
     // Syntax check
@@ -193,6 +193,74 @@ router.get('/:id', async (req: Request<{ id: string }, {}, {}>, res) => {
 
     if (count >= 1) res.sendStatus(200)
     else res.sendStatus(410)
+  } catch (error) {
+    res.status(500).json(error)
+  }
+})
+
+/**
+ * @swagger
+ * /call/getTURNCredentials:
+ *   post:
+ *     tags:
+ *       - call
+ *     description: Asks server for short-lived credentials to the hosted TURN server
+ *     parameters:
+ *       - name: json
+ *         in: body
+ *         required: true
+ *         schema:
+ *         type: object
+ *           properties:
+ *             username:
+ *               type: string
+ *               description: TURN server username
+ *             password:
+ *               type: string
+ *               description: TURN server password
+ *     responses:
+ *       200:
+ *         description: Returns short-lived credentials for contacting the TURN server
+ *         schema:
+ *           type: string
+ *           description: HMAC string valid for next 24 hours
+ *       400:
+ *         description: Invalid syntax
+ *       401:
+ *         description: Invalid signature
+ *       500:
+ *         description: Returns json describing the error
+ */
+router.post('/getTURNCredentials', async (req, res) => {
+  try {
+    // Syntax check
+    if (!req.body.id || !req.body.signature) {
+      res.sendStatus(400)
+      return
+    }
+
+    // Signature check
+    const valid = await verifyNonceSignature(req.body.id, req.body.signature)
+    if (!valid) {
+      res.sendStatus(401)
+      return
+    }
+
+    const TURNsecret = process.env.TURNsecret
+
+    if (!TURNsecret) throw 'TURNsecret environment variable not defined'
+
+    const unixTimeStamp = Math.floor(new Date().getTime() / 1000) + 3600 * 6 // 6 hours TTL
+    const username = [unixTimeStamp, req.body.id].join(':')
+    const hmac = createHmac('sha1', TURNsecret)
+    hmac.setEncoding('base64')
+    hmac.write(username)
+    hmac.end()
+    const password = hmac.read()
+    res.json({
+      username: username,
+      password: password,
+    })
   } catch (error) {
     res.status(500).json(error)
   }
