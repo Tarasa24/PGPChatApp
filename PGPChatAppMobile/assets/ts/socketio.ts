@@ -1,7 +1,6 @@
 import OpenPGP from 'react-native-fast-openpgp'
 import { io } from 'socket.io-client'
 import { getConnection, getRepository } from 'typeorm'
-import DeviceInfo from 'react-native-device-info'
 import * as messageUpdatesListReducer from '../../store/reducers/messageUpdatesListReducer'
 import * as socketConnectedReducer from '../../store/reducers/socketConnectedReducer'
 import { store } from '../../store/store'
@@ -51,11 +50,7 @@ export type CallPayload = {
   calleePeerToken: string
 }
 
-const path = __DEV__
-  ? DeviceInfo.isEmulatorSync()
-    ? 'ws://10.0.2.2:5000'
-    : 'ws://localhost:5000'
-  : 'wss://chatapp.tarasa24.dev'
+const path = __DEV__ ? 'ws://localhost:5000' : 'wss://chatapp.tarasa24.dev'
 
 const socket = io(path, {
   reconnection: true,
