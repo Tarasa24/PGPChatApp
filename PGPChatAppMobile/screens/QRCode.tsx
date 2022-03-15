@@ -34,7 +34,8 @@ export default function QRCode(props: Props) {
         style={{
           alignItems: 'center',
           marginVertical: 20,
-        }}>
+        }}
+      >
         <View
           style={{
             borderColor: theme.colors.border,
@@ -42,7 +43,8 @@ export default function QRCode(props: Props) {
             borderRadius: 20,
             padding: 15,
             backgroundColor: 'white',
-          }}>
+          }}
+        >
           <QR.default
             value={props.route.params.userID}
             logo={
@@ -66,7 +68,8 @@ export default function QRCode(props: Props) {
             visibilityTime: 1500,
           })
           Clipboard.setString(props.route.params.userID)
-        }}>
+        }}
+      >
         <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
           <Text style={{ color: theme.colors.text, textAlign: 'center' }}>
             {props.route.params.userID}

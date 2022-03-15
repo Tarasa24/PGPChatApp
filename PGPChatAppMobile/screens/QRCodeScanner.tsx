@@ -32,14 +32,16 @@ export default function QRCodeScanner() {
               alignItems: 'center',
               display: scannedID.length !== 0 ? 'flex' : 'none',
               marginTop: 10,
-            }}>
+            }}
+          >
             <Text style={{ color: 'white', fontWeight: 'bold' }}>{scannedID}</Text>
             <View
               style={{
                 marginTop: 10,
                 backgroundColor: theme.colors.primary,
                 borderRadius: 50,
-              }}>
+              }}
+            >
               <TouchableOpacity
                 activeOpacity={0.6}
                 style={{
@@ -61,7 +63,8 @@ export default function QRCodeScanner() {
                       },
                     ],
                   })
-                }}>
+                }}
+              >
                 <Icon name="checkmark" color="white" />
               </TouchableOpacity>
             </View>

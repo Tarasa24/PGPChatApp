@@ -59,11 +59,13 @@ function ChatHeader(props: Props) {
           ...{
             backgroundColor: theme.colors.primary,
           },
-        }}>
+        }}
+      >
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.icon}
-          activeOpacity={0.7}>
+          activeOpacity={0.7}
+        >
           <Icon name="arrow-back" size={25} color="white" />
         </TouchableOpacity>
         <View
@@ -72,7 +74,8 @@ function ChatHeader(props: Props) {
             alignItems: 'center',
             marginLeft: 15,
             flex: 1,
-          }}>
+          }}
+        >
           <TouchableOpacity
             activeOpacity={0.7}
             style={{
@@ -86,7 +89,8 @@ function ChatHeader(props: Props) {
               navigation.navigate('Profile', {
                 user: props.user,
               } as Profile.RouteParams)
-            }>
+            }
+          >
             <Avatar userID={props.user.id} size={35} />
             <Text
               style={{
@@ -98,7 +102,8 @@ function ChatHeader(props: Props) {
                   : 'none',
               }}
               ellipsizeMode="tail"
-              numberOfLines={1}>
+              numberOfLines={1}
+            >
               {name ? name : props.user.id}
             </Text>
           </TouchableOpacity>
@@ -129,7 +134,8 @@ function ChatHeader(props: Props) {
               props.socketConnected !== socketConnectedReducer.StateEnum.Connected ||
               props.blocklist.includes(props.user.id)
             }
-            activeOpacity={0.7}>
+            activeOpacity={0.7}
+          >
             <Icon
               name="call"
               size={25}
@@ -151,13 +157,15 @@ function ChatHeader(props: Props) {
                 backgroundColor: theme.colors.background,
                 borderColor: theme.colors.border,
                 borderWidth: 1,
-              }}>
+              }}
+            >
               <MenuOption
                 onSelect={() => {
                   navigation.navigate('Profile', {
                     user: props.user,
                   } as Profile.RouteParams)
-                }}>
+                }}
+              >
                 <Text style={{ ...styles.optionText, color: theme.colors.text }}>
                   Show profile
                 </Text>
@@ -172,7 +180,8 @@ function ChatHeader(props: Props) {
                   navigation.navigate('Gallery', {
                     user: props.user,
                   } as Gallery.RouteParams)
-                }}>
+                }}
+              >
                 <Text style={{ ...styles.optionText, color: theme.colors.text }}>
                   Show media
                 </Text>
@@ -204,7 +213,8 @@ function ChatHeader(props: Props) {
                         },
                       ]
                     )
-                }}>
+                }}
+              >
                 <Text style={{ ...styles.optionText, color: 'red' }}>
                   {!props.blocklist.includes(props.user.id)
                     ? 'Block contact'
@@ -267,7 +277,8 @@ function ChatHeader(props: Props) {
                       },
                     ]
                   )
-                }>
+                }
+              >
                 <Text style={{ ...styles.optionText, color: 'red' }}>
                   Delete conversation
                 </Text>

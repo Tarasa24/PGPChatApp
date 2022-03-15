@@ -217,7 +217,8 @@ function ThemedBackground(props) {
       style={{
         flex: 1,
         backgroundColor: theme.colors.background,
-      }}>
+      }}
+    >
       {props.children}
     </View>
   )

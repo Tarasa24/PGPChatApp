@@ -57,20 +57,24 @@ function ContactSelection(props: Props) {
               style={{
                 flexDirection: 'row',
                 marginTop: 10,
-              }}>
+              }}
+            >
               <View
                 style={{
                   flexGrow: 1,
-                }}>
+                }}
+              >
                 <TouchableOpacity
                   activeOpacity={0.6}
-                  onPress={() => tickContact(contact.id)}>
+                  onPress={() => tickContact(contact.id)}
+                >
                   <View
                     style={{
                       flexDirection: 'row',
                       alignItems: 'center',
                       marginHorizontal: 10,
-                    }}>
+                    }}
+                  >
                     <Avatar userID={contact.id} size={60} />
                     <Text
                       style={{
@@ -81,7 +85,8 @@ function ContactSelection(props: Props) {
                         flex: 1,
                         flexGrow: 1,
                       }}
-                      numberOfLines={1}>
+                      numberOfLines={1}
+                    >
                       {contact.name ? contact.name : contact.id}
                     </Text>
                   </View>

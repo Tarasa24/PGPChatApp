@@ -359,7 +359,8 @@ function Chat(props: Props) {
           }}
           onPress={() => {
             sendMessage()
-          }}>
+          }}
+        >
           <Icon color="white" name="send" />
         </TouchableOpacity>
       )
@@ -377,7 +378,8 @@ function Chat(props: Props) {
           onPress={() => {
             Keyboard.dismiss()
             setAddFileMenuOpened(!addFileMenuOpened)
-          }}>
+          }}
+        >
           <Icon color="white" name="add" />
         </TouchableOpacity>
       )
@@ -432,7 +434,8 @@ function Chat(props: Props) {
               width: 64,
               justifyContent: 'center',
               alignItems: 'center',
-            }}>
+            }}
+          >
             <Icon name="document" size={32} color={theme.colors.text} />
             <Text style={{ color: theme.colors.text, fontSize: 10 }} numberOfLines={1}>
               {file.name}
@@ -472,7 +475,8 @@ function Chat(props: Props) {
               borderRadius: 10,
               overflow: 'hidden',
               marginHorizontal: 5,
-            }}>
+            }}
+          >
             <View
               style={{
                 position: 'absolute',
@@ -485,7 +489,8 @@ function Chat(props: Props) {
                 backgroundColor: theme.colors.primary,
                 justifyContent: 'center',
                 alignItems: 'center',
-              }}>
+              }}
+            >
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => {
@@ -493,7 +498,8 @@ function Chat(props: Props) {
                     ...inlineFiles.slice(0, index),
                     ...inlineFiles.slice(index + 1),
                   ])
-                }}>
+                }}
+              >
                 <Icon name="close" size={20} color="white" />
               </TouchableOpacity>
             </View>
@@ -509,7 +515,8 @@ function Chat(props: Props) {
           flexDirection: 'row',
           alignItems: 'center',
           marginBottom: 5,
-        }}>
+        }}
+      >
         {out}
         {!addFileMenuOpened ? (
           <View style={{ paddingHorizontal: 15 }}>{sendAddButton(true)}</View>
@@ -523,14 +530,16 @@ function Chat(props: Props) {
       style={{
         flex: 1,
         backgroundColor: theme.colors.background,
-      }}>
+      }}
+    >
       {chatBubbles()}
 
       <View
         style={{
           paddingHorizontal: 5,
           paddingTop: 7.5,
-        }}>
+        }}
+      >
         <ScrollView horizontal={true}>{showInlineFiles()}</ScrollView>
         {inlineFiles.length > 0 && (
           <Text style={{ color: theme.colors.text }}>
@@ -548,7 +557,8 @@ function Chat(props: Props) {
             paddingHorizontal: 5,
             paddingVertical: 7.5,
             alignItems: 'center',
-          }}>
+          }}
+        >
           <TextInput
             ref={inputRef}
             autoFocus={true}
@@ -674,7 +684,8 @@ function Chat(props: Props) {
                   } catch (err) {
                     if (!DocumentPicker.isCancel(err)) throw err
                   }
-                }}>
+                }}
+              >
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -682,13 +693,15 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}>
+                  }}
+                >
                   <Icon name="photos" size={64} color={theme.colors.text} />
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: theme.colors.text,
-                    }}>
+                    }}
+                  >
                     Gallery
                   </Text>
                 </View>
@@ -696,7 +709,8 @@ function Chat(props: Props) {
 
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => Linking.openURL('https://giphy.com')}>
+                onPress={() => Linking.openURL('https://giphy.com')}
+              >
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -704,21 +718,24 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}>
+                  }}
+                >
                   <Text
                     style={{
                       fontWeight: 'bold',
                       color: theme.colors.text,
                       fontSize: 32,
                       lineHeight: 64,
-                    }}>
+                    }}
+                  >
                     GIF
                   </Text>
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: theme.colors.text,
-                    }}>
+                    }}
+                  >
                     GIF
                   </Text>
                 </View>
@@ -730,7 +747,8 @@ function Chat(props: Props) {
                   navigation.navigate('ContactSelection', {
                     chatID: props.route.params.participants.other.id,
                   } as ContactSelection.RouteParams)
-                }}>
+                }}
+              >
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -738,13 +756,15 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}>
+                  }}
+                >
                   <Icon name="person" size={64} color={theme.colors.text} />
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: theme.colors.text,
-                    }}>
+                    }}
+                  >
                     Contacts
                   </Text>
                 </View>
@@ -788,7 +808,8 @@ function Chat(props: Props) {
                   } catch (err) {
                     if (!DocumentPicker.isCancel(err)) throw err
                   }
-                }}>
+                }}
+              >
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -796,13 +817,15 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}>
+                  }}
+                >
                   <Icon name="document" size={64} color={theme.colors.text} />
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: theme.colors.text,
-                    }}>
+                    }}
+                  >
                     File
                   </Text>
                 </View>
@@ -816,13 +839,15 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}>
+                  }}
+                >
                   <Icon name="time" size={64} color="grey" />
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: 'grey',
-                    }}>
+                    }}
+                  >
                     More to come...
                   </Text>
                 </View>

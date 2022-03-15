@@ -34,19 +34,22 @@ export function LandingPage(props) {
         style={{
           backgroundColor: theme.colors.primary,
           zIndex: 2,
-        }}>
+        }}
+      >
         <View
           style={{
             alignItems: 'center',
             marginTop: 40,
             marginBottom: 10,
-          }}>
+          }}
+        >
           <View
             style={{
               backgroundColor: 'white',
               borderRadius: 25,
               padding: 30,
-            }}>
+            }}
+          >
             {!theme.dark ? (
               <Logo style={styles.logo} />
             ) : (
@@ -67,13 +70,15 @@ export function LandingPage(props) {
           }}
           onPress={() => {
             navigation.navigate('GenerateAccount')
-          }}>
+          }}
+        >
           <Text
             style={{
               textAlign: 'center',
               fontSize: 21,
               color: 'white',
-            }}>
+            }}
+          >
             Generate New Account
           </Text>
         </TouchableOpacity>
@@ -113,13 +118,15 @@ export function LandingPage(props) {
                 'An error has occured',
                 "Content isn't in valid PGP Private Key format"
               )
-          }}>
+          }}
+        >
           <Text
             style={{
               textAlign: 'center',
               fontSize: 21,
               color: 'white',
-            }}>
+            }}
+          >
             Import Private Key
           </Text>
         </TouchableOpacity>
@@ -133,13 +140,15 @@ export function LandingPage(props) {
           justifyContent: 'center',
           alignItems: 'center',
           flexDirection: 'row',
-        }}>
+        }}
+      >
         <Text
           style={{
             textAlign: 'center',
             fontSize: 17,
             color: theme.colors.text,
-          }}>
+          }}
+        >
           Made with ❤️ by{' '}
         </Text>
         <TouchableOpacity
@@ -148,13 +157,15 @@ export function LandingPage(props) {
             Linking.openURL('https://tarasa24.dev').catch((err) =>
               console.error("Couldn't load page", err)
             )
-          }}>
+          }}
+        >
           <Text
             style={{
               fontWeight: 'bold',
               fontSize: 17,
               color: theme.colors.text,
-            }}>
+            }}
+          >
             Tarasa24
           </Text>
         </TouchableOpacity>
@@ -165,7 +176,8 @@ export function LandingPage(props) {
           position: 'absolute',
           right: 10,
           bottom: 10,
-        }}>
+        }}
+      >
         <TouchableOpacity
           style={{ marginLeft: 10 }}
           activeOpacity={0.7}
@@ -176,7 +188,8 @@ export function LandingPage(props) {
               ToastAndroid.SHORT,
               ToastAndroid.BOTTOM
             )
-          }}>
+          }}
+        >
           <Icon
             name={theme.dark ? 'sunny' : 'moon'}
             color={lightenDarkenColor(theme.colors.primary, 80 * (theme.dark ? 0 : 1))}

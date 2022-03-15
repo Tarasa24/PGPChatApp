@@ -253,7 +253,8 @@ export default function Call(props: Props) {
           style={{
             flex: 1,
             width: '100%',
-          }}>
+          }}
+        >
           {remoteStream && (
             <RTCView
               streamURL={remoteStream.toURL()}
@@ -273,7 +274,8 @@ export default function Call(props: Props) {
                 justifyContent: 'center',
                 alignItems: 'center',
                 overflow: 'hidden',
-              }}>
+              }}
+            >
               <Avatar
                 userID={
                   !amICaller ? props.route.params.caller : props.route.params.callee
@@ -297,7 +299,8 @@ export default function Call(props: Props) {
             borderWidth: 2,
             backgroundColor: theme.colors.background,
             overflow: 'hidden',
-          }}>
+          }}
+        >
           {localStream && (
             <RTCView
               streamURL={localStream.toURL()}
@@ -315,7 +318,8 @@ export default function Call(props: Props) {
                 position: 'absolute',
                 top: 10,
                 right: 10,
-              }}>
+              }}
+            >
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => {
@@ -328,7 +332,8 @@ export default function Call(props: Props) {
                     ToastAndroid.SHORT,
                     ToastAndroid.BOTTOM
                   )
-                }}>
+                }}
+              >
                 <View
                   style={{
                     backgroundColor: theme.colors.primary,
@@ -337,7 +342,8 @@ export default function Call(props: Props) {
                     borderRadius: 50,
                     justifyContent: 'center',
                     alignItems: 'center',
-                  }}>
+                  }}
+                >
                   <Icon name="reverse-camera" size={20} color="white" />
                 </View>
               </TouchableOpacity>
@@ -352,7 +358,8 @@ export default function Call(props: Props) {
                 justifyContent: 'center',
                 alignItems: 'center',
                 overflow: 'hidden',
-              }}>
+              }}
+            >
               <Avatar
                 userID={amICaller ? props.route.params.caller : props.route.params.callee}
                 size={90}
@@ -374,7 +381,8 @@ export default function Call(props: Props) {
           alignItems: 'center',
           justifyContent: 'center',
           flexDirection: 'row',
-        }}>
+        }}
+      >
         <TouchableOpacity
           activeOpacity={0.7}
           disabled={!dataConnection}
@@ -389,7 +397,8 @@ export default function Call(props: Props) {
               ToastAndroid.SHORT,
               ToastAndroid.BOTTOM
             )
-          }}>
+          }}
+        >
           <View
             style={{
               backgroundColor: theme.colors.border,
@@ -400,7 +409,8 @@ export default function Call(props: Props) {
               borderRadius: 50,
               marginHorizontal: 5,
               opacity: !dataConnection ? 0.25 : 1,
-            }}>
+            }}
+          >
             <Icon
               name={!localCamera ? 'videocam' : 'eye-off'}
               color={theme.colors.text}
@@ -430,7 +440,8 @@ export default function Call(props: Props) {
               ToastAndroid.SHORT,
               ToastAndroid.BOTTOM
             )
-          }}>
+          }}
+        >
           <View
             style={{
               backgroundColor: theme.colors.primary,
@@ -440,7 +451,8 @@ export default function Call(props: Props) {
               alignItems: 'center',
               borderRadius: 50,
               marginHorizontal: 5,
-            }}>
+            }}
+          >
             <Icon
               name="call"
               style={{ transform: [{ rotate: '135deg' }] }}
@@ -462,7 +474,8 @@ export default function Call(props: Props) {
               ToastAndroid.SHORT,
               ToastAndroid.BOTTOM
             )
-          }}>
+          }}
+        >
           <View
             style={{
               backgroundColor: theme.colors.border,
@@ -473,7 +486,8 @@ export default function Call(props: Props) {
               borderRadius: 50,
               marginHorizontal: 5,
               opacity: !dataConnection ? 0.25 : 1,
-            }}>
+            }}
+          >
             <Icon name={!localMic ? 'mic' : 'mic-off'} color={theme.colors.text} />
           </View>
         </TouchableOpacity>
@@ -514,7 +528,8 @@ function VoiceActivity(props: { voiceLevel: number }) {
             }),
           },
         ],
-      }}>
+      }}
+    >
       <Svg height="120" width="120">
         <Circle cx="60" cy="60" r="50" fill={theme.colors.text} />
       </Svg>

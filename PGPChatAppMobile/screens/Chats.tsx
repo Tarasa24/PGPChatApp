@@ -73,7 +73,8 @@ class ListItem extends PureComponent<{
               style={{
                 color: theme.colors.text,
               }}
-              numberOfLines={1}>
+              numberOfLines={1}
+            >
               {messageText(msg)}
             </Text>
           )
@@ -108,7 +109,8 @@ class ListItem extends PureComponent<{
           navigation.navigate('Chat', {
             participants: { self: self, other: other.user },
           } as Chat.RouteParams)
-        }>
+        }
+      >
         <View style={styles.row}>
           <View style={{ paddingHorizontal: 5, position: 'relative' }}>
             <Avatar userID={other.user.id} size={60} />
@@ -126,7 +128,8 @@ class ListItem extends PureComponent<{
                     position: 'absolute',
                     right: 0,
                     zIndex: 9,
-                  }}>
+                  }}
+                >
                   <Icon name="alert" color="white" size={20} />
                 </View>
               ) : null
@@ -143,7 +146,8 @@ class ListItem extends PureComponent<{
                   ? 'line-through'
                   : 'none',
               }}
-              numberOfLines={1}>
+              numberOfLines={1}
+            >
               {other.user.name ? other.user.name : other.user.id}
             </Text>
             {highlightNewMessage(other.lastMessage)}
@@ -322,7 +326,8 @@ function Chats(props: Props) {
               minHeight: '100%',
               justifyContent: 'center',
               alignItems: 'center',
-            }}>
+            }}
+          >
             <Icon name="search" color={theme.colors.primary} size={60} />
             <Text style={{ color: theme.colors.text }}>
               Time to find someone to talk to
@@ -341,7 +346,8 @@ function Chats(props: Props) {
           position: 'absolute',
           bottom: 100,
           right: 10,
-        }}>
+        }}
+      >
         <TouchableHighlight
           underlayColor={lightenDarkenColor(
             theme.colors.primary,
@@ -357,7 +363,8 @@ function Chats(props: Props) {
             height: 65,
             backgroundColor: theme.colors.primary,
             borderRadius: 100,
-          }}>
+          }}
+        >
           <Icon name="add" size={30} color="white" />
         </TouchableHighlight>
       </View>

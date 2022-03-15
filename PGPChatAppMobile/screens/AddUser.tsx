@@ -106,7 +106,8 @@ function AddUser(props: Props) {
         style={{
           marginHorizontal: 20,
           justifyContent: 'center',
-        }}>
+        }}
+      >
         <TextInput
           style={styles.input}
           placeholder="PGPChatApp ID"
@@ -118,7 +119,8 @@ function AddUser(props: Props) {
 
         <TouchableOpacity
           activeOpacity={0.6}
-          onPress={() => navigation.navigate('QRCodeScanner')}>
+          onPress={() => navigation.navigate('QRCodeScanner')}
+        >
           <View style={{ alignItems: 'center', marginTop: 40 }}>
             <Icon name="qr-scanner" color={theme.colors.text} size={60} />
             <Text style={{ color: theme.colors.text }}>Scan QR Code</Text>
