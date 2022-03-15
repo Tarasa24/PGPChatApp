@@ -16,7 +16,7 @@ buildscript {
         jcenter()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:4.2.2")
+        classpath("com.android.tools.build:gradle:3.5.0")
         classpath("de.undercouch:gradle-download-task:5.0.1")
         classpath("com.google.gms:google-services:4.3.5")
         // NOTE: Do not place your application dependencies here; they belong
@@ -56,9 +56,18 @@ allprojects {
                 includeModule("com.facebook.fresco", "memory-type-java")
                 includeModule("com.facebook.fresco", "nativeimagefilters")
                 includeModule("com.facebook.fresco", "animated-drawable")
+                includeModule("com.facebook.fresco", "memory-type-ashmem")
+                includeModule("com.facebook.fresco", "ui-common")
             }
         }
         google()
         maven { url 'https://www.jitpack.io' }
+    }
+
+    tasks.withType(Javadoc) {
+        failOnError false
+        options.addStringOption('Xdoclint:none', '-quiet')
+        options.addStringOption('encoding', 'UTF-8')
+        options.addStringOption('charSet', 'UTF-8')
     }
 }
