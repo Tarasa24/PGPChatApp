@@ -59,7 +59,7 @@ export function ImportPK(props: Props) {
   }, [])
 
   useEffect(() => {
-    setValidID(new RegExp(/^[a-zA-Z0-9]{27}$/).test(ID))
+    setValidID(new RegExp(/^[a-zA-Z0-9]{27,28}$/).test(ID))
   }, [ID])
 
   return (
@@ -71,8 +71,7 @@ export function ImportPK(props: Props) {
           style={{
             alignItems: 'center',
             marginHorizontal: 20,
-          }}
-        >
+          }}>
           <TextInput
             style={{
               marginVertical: 10,
@@ -97,14 +96,12 @@ export function ImportPK(props: Props) {
             marginTop: 10,
             marginHorizontal: 20,
             alignSelf: 'center',
-          }}
-        >
+          }}>
           <View
             style={{
               alignItems: 'center',
               marginRight: '20%',
-            }}
-          >
+            }}>
             <Text style={{ color: theme.colors.text }}>PK format:</Text>
             <Text style={{ color: theme.colors.text }}>ID format:</Text>
             <Text style={{ color: theme.colors.text }}>PK and ID validated:</Text>
@@ -203,14 +200,12 @@ export function ImportPK(props: Props) {
                 // Restart app
                 RNRestart.Restart()
               }
-            }}
-          >
+            }}>
             <Text
               style={{
                 textAlign: 'center',
                 color: 'white',
-              }}
-            >
+              }}>
               {validPK === PKValididty.Valid
                 ? 'IMPORT'
                 : 'Validate against the Keyserver'}
