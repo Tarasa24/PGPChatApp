@@ -43,6 +43,8 @@ import DocumentPicker from 'react-native-document-picker'
 import Video from 'react-native-video'
 import RNFetchBlob from 'rn-fetch-blob'
 import * as Compressor from 'react-native-compressor'
+import * as draftReducer from '../store/reducers/draftReducer'
+import * as ContactSelection from './ContactSelection'
 
 export interface RouteParams {
   participants: {
@@ -57,7 +59,9 @@ interface Props {
   }
   localUser: LocalUserState
   messageUpdatesList: string[]
+  drafts: Map<string, string>
   addToMessageUpdateList: (messageId: string | string[]) => void
+  setDraft: (userID: string, draftText: string) => void
 }
 
 export interface InlineFile {
@@ -129,7 +133,9 @@ function Chat(props: Props) {
 
   const [stage, setStage] = useState(Stages.Loading)
   const [messages, setMessages] = useState([] as MessageRaw[])
-  const [inputState, setInputState] = useState('')
+  const [inputState, setInputState] = useState(
+    props.drafts[props.route.params.participants.other.id]
+  )
 
   const [addFileMenuOpened, setAddFileMenuOpened] = useState(false)
 
@@ -195,6 +201,10 @@ function Chat(props: Props) {
     if (unread.length > 0) props.addToMessageUpdateList(unread.map((msg) => msg.id))
   }
 
+  function beforeLeave() {
+    props.setDraft(props.route.params.participants.other.id, inputState)
+  }
+
   useEffect(() => {
     navigation.setOptions({
       header: () => <ChatHeader user={props.route.params.participants.other} />,
@@ -210,6 +220,17 @@ function Chat(props: Props) {
       sendReadStatus()
     })
   }, [props.messageUpdatesList])
+
+  useEffect(() => {
+    const draft = props.drafts[props.route.params.participants.other.id]
+    if (draft !== null && inputState !== draft) setInputState(draft)
+  }, [props.drafts])
+
+  useEffect(() => {
+    const draft = props.drafts[props.route.params.participants.other.id]
+    if (inputState !== draft)
+      props.setDraft(props.route.params.participants.other.id, inputState)
+  }, [inputState])
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', function () {
@@ -702,6 +723,33 @@ function Chat(props: Props) {
                   </Text>
                 </View>
               </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={async () => {
+                  navigation.navigate('ContactSelection', {
+                    chatID: props.route.params.participants.other.id,
+                  } as ContactSelection.RouteParams)
+                }}>
+                <View
+                  style={{
+                    ...styles.addFileMenuItem,
+                    backgroundColor: lightenDarkenColor(
+                      theme.colors.background,
+                      25 * (theme.dark ? 1 : -1)
+                    ),
+                  }}>
+                  <Icon name="person" size={64} color={theme.colors.text} />
+                  <Text
+                    style={{
+                      ...styles.addFileMenuItemText,
+                      color: theme.colors.text,
+                    }}>
+                    Contacts
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={async () => {
@@ -805,15 +853,20 @@ const styles = StyleSheet.create({
 const mapStateToProps = (state: any) => ({
   localUser: state.localUserReducer,
   messageUpdatesList: state.messageUpdatesListReducer,
+  drafts: state.draftReducer,
 })
 
 const mapDispatchToProps = (dispatch: any) => ({
-  addToMessageUpdateList: (messageId: string | string[]) => {
+  addToMessageUpdateList: (messageId: string | string[]) =>
     dispatch({
       type: 'ADD_TO_MESSAGE_UPDATES_LIST',
       payload: { messageID: messageId },
-    } as messageUpdatesListReducer.Action)
-  },
+    } as messageUpdatesListReducer.Action),
+  setDraft: (userID: string, draftText: string) =>
+    dispatch({
+      type: 'SET_DRAFT',
+      payload: { userID: userID, draftText: draftText },
+    } as draftReducer.Action),
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(Chat)

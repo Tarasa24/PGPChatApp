@@ -22,6 +22,7 @@ import LandingPage from './screens/LandingPage'
 import GenerateAccount from './screens/GenerateAccount'
 import QRCode from './screens/QRCode'
 import QRCodeScanner from './screens/QRCodeScanner'
+import ContactSelection from './screens/ContactSelection'
 
 // Import custom
 import { ThemeProvider, useTheme } from './components/ThemeContext'
@@ -186,6 +187,13 @@ export default function App() {
                         component={Call}
                         options={{
                           header: () => <Header title="Call" goBackButton={false} />,
+                        }}
+                      />
+                      <Stack.Screen
+                        name="ContactSelection"
+                        component={ContactSelection}
+                        options={{
+                          header: () => <Header title="Share contact(s)" />,
                         }}
                       />
                     </StackNavigator>

@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import com.facebook.react.PackageList;
 import com.facebook.react.ReactApplication;
+import com.reactnativecommunity.checkbox.ReactCheckBoxPackage;
 import org.devio.rn.splashscreen.SplashScreenReactPackage;
 import com.oney.WebRTCModule.WebRTCModulePackage;
 import com.vinzscam.reactnativefileviewer.RNFileViewerPackage;

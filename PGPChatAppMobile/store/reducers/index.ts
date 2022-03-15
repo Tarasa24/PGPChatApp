@@ -8,6 +8,7 @@ import messageUpdatesListReducer from './messageUpdatesListReducer'
 import socketConnectedReducer from './socketConnectedReducer'
 import userNamesReducer from './userNamesReducer'
 import blocklistReducer from './blocklistReducer'
+import draftReducer from './draftReducer'
 
 // Redux: Root Reducer
 const rootReducer = combineReducers({
@@ -18,6 +19,7 @@ const rootReducer = combineReducers({
   socketConnectedReducer,
   userNamesReducer,
   blocklistReducer,
+  draftReducer,
 })
 // Exports
 export default rootReducer
