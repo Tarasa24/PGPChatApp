@@ -35,22 +35,17 @@ export async function sendNotification(to: string, data: NotificationData) {
   if (data.COMMAND === 'NEW_MESSAGE') {
     const messagesQueue = await MessagesQueue.findAll({
       where: { to: to },
-      attributes: ['from'],
+      attributes: ['from', 'id'],
     })
-
-    const numberOfMessages = messagesQueue.length
-    const numberOfContacts = messagesQueue
-      .map((m) => {
-        return m['from']
-      })
-      .filter((value, index, self) => {
-        return self.indexOf(value) === index
-      }).length
+    let messageIDs = {}
+    for (const m of messagesQueue) {
+      messageIDs[m['from']] = messageIDs[m['from']]
+        ? [...messageIDs[m['from']], m['id']]
+        : [m['id']]
+    }
 
     //@ts-ignore
-    data.PAYLOAD.body =
-      `${numberOfMessages} New Message${numberOfMessages > 1 ? 's' : ''}` +
-      (numberOfContacts > 1 ? `from ${numberOfContacts} contacts` : '')
+    data.PAYLOAD.newMessages = messageIDs
 
     Object.keys(data).forEach((key) => {
       if (typeof data[key] === 'object') data[key] = JSON.stringify(data[key])
@@ -59,16 +54,9 @@ export async function sendNotification(to: string, data: NotificationData) {
       data: data as any,
       token: notificationToken,
     }
-
-    const removeAllNotificationsCommand: admin.messaging.Message = {
-      data: {
-        COMMAND: 'DELETE_ALL_NOTIFICATIONS',
-      },
-      token: notificationToken,
-    }
     admin
       .messaging()
-      .send(numberOfMessages > 0 ? message : removeAllNotificationsCommand)
+      .send(message)
       .then((response) => {
         console.log('Successfully sent message:', response)
       })

@@ -16,6 +16,7 @@ import {
   ToastAndroid,
   RefreshControl,
   FlatList,
+  Linking,
 } from 'react-native'
 import { TouchableOpacity } from 'react-native-gesture-handler'
 import Icon from 'react-native-ionicons'
@@ -42,7 +43,8 @@ import DocumentPicker from 'react-native-document-picker'
 import Video from 'react-native-video'
 import RNFetchBlob from 'rn-fetch-blob'
 import * as Compressor from 'react-native-compressor'
-import * as pickedGifReducer from '../store/reducers/pickedGifReducer'
+import * as draftReducer from '../store/reducers/draftReducer'
+import * as ContactSelection from './ContactSelection'
 
 export interface RouteParams {
   participants: {
@@ -57,9 +59,9 @@ interface Props {
   }
   localUser: LocalUserState
   messageUpdatesList: string[]
+  drafts: Map<string, string>
   addToMessageUpdateList: (messageId: string | string[]) => void
-  pickedGif: InlineFile
-  dropPickedGif: () => void
+  setDraft: (userID: string, draftText: string) => void
 }
 
 export interface InlineFile {
@@ -131,16 +133,11 @@ function Chat(props: Props) {
 
   const [stage, setStage] = useState(Stages.Loading)
   const [messages, setMessages] = useState([] as MessageRaw[])
-  const [inputState, setInputState] = useState('')
+  const [inputState, setInputState] = useState(
+    props.drafts[props.route.params.participants.other.id]
+  )
 
   const [addFileMenuOpened, setAddFileMenuOpened] = useState(false)
-
-  useEffect(() => {
-    if (Object.keys(props.pickedGif).length != 0) {
-      setInlineFiles([...inlineFiles, props.pickedGif])
-      props.dropPickedGif()
-    }
-  }, [props.pickedGif])
 
   async function loadMessages(youngerThan = null) {
     const messageRepository = getRepository(Message)
@@ -204,6 +201,10 @@ function Chat(props: Props) {
     if (unread.length > 0) props.addToMessageUpdateList(unread.map((msg) => msg.id))
   }
 
+  function beforeLeave() {
+    props.setDraft(props.route.params.participants.other.id, inputState)
+  }
+
   useEffect(() => {
     navigation.setOptions({
       header: () => <ChatHeader user={props.route.params.participants.other} />,
@@ -219,6 +220,17 @@ function Chat(props: Props) {
       sendReadStatus()
     })
   }, [props.messageUpdatesList])
+
+  useEffect(() => {
+    const draft = props.drafts[props.route.params.participants.other.id]
+    if (draft !== null && inputState !== draft) setInputState(draft)
+  }, [props.drafts])
+
+  useEffect(() => {
+    const draft = props.drafts[props.route.params.participants.other.id]
+    if (inputState !== draft)
+      props.setDraft(props.route.params.participants.other.id, inputState)
+  }, [inputState])
 
   useEffect(() => {
     const backHandler = BackHandler.addEventListener('hardwareBackPress', function () {
@@ -239,7 +251,6 @@ function Chat(props: Props) {
     const text = inputState
     setInputState('')
     inputRef.current.clear()
-    inputRef.current.blur()
 
     const messageRepository = getRepository(Message)
 
@@ -348,7 +359,8 @@ function Chat(props: Props) {
           }}
           onPress={() => {
             sendMessage()
-          }}>
+          }}
+        >
           <Icon color="white" name="send" />
         </TouchableOpacity>
       )
@@ -366,7 +378,8 @@ function Chat(props: Props) {
           onPress={() => {
             Keyboard.dismiss()
             setAddFileMenuOpened(!addFileMenuOpened)
-          }}>
+          }}
+        >
           <Icon color="white" name="add" />
         </TouchableOpacity>
       )
@@ -421,7 +434,8 @@ function Chat(props: Props) {
               width: 64,
               justifyContent: 'center',
               alignItems: 'center',
-            }}>
+            }}
+          >
             <Icon name="document" size={32} color={theme.colors.text} />
             <Text style={{ color: theme.colors.text, fontSize: 10 }} numberOfLines={1}>
               {file.name}
@@ -461,7 +475,8 @@ function Chat(props: Props) {
               borderRadius: 10,
               overflow: 'hidden',
               marginHorizontal: 5,
-            }}>
+            }}
+          >
             <View
               style={{
                 position: 'absolute',
@@ -474,7 +489,8 @@ function Chat(props: Props) {
                 backgroundColor: theme.colors.primary,
                 justifyContent: 'center',
                 alignItems: 'center',
-              }}>
+              }}
+            >
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => {
@@ -482,7 +498,8 @@ function Chat(props: Props) {
                     ...inlineFiles.slice(0, index),
                     ...inlineFiles.slice(index + 1),
                   ])
-                }}>
+                }}
+              >
                 <Icon name="close" size={20} color="white" />
               </TouchableOpacity>
             </View>
@@ -498,7 +515,8 @@ function Chat(props: Props) {
           flexDirection: 'row',
           alignItems: 'center',
           marginBottom: 5,
-        }}>
+        }}
+      >
         {out}
         {!addFileMenuOpened ? (
           <View style={{ paddingHorizontal: 15 }}>{sendAddButton(true)}</View>
@@ -512,14 +530,16 @@ function Chat(props: Props) {
       style={{
         flex: 1,
         backgroundColor: theme.colors.background,
-      }}>
+      }}
+    >
       {chatBubbles()}
 
       <View
         style={{
           paddingHorizontal: 5,
           paddingTop: 7.5,
-        }}>
+        }}
+      >
         <ScrollView horizontal={true}>{showInlineFiles()}</ScrollView>
         {inlineFiles.length > 0 && (
           <Text style={{ color: theme.colors.text }}>
@@ -537,9 +557,11 @@ function Chat(props: Props) {
             paddingHorizontal: 5,
             paddingVertical: 7.5,
             alignItems: 'center',
-          }}>
+          }}
+        >
           <TextInput
             ref={inputRef}
+            autoFocus={true}
             style={{
               maxWidth: '87.5%',
               color: theme.colors.text,
@@ -662,7 +684,8 @@ function Chat(props: Props) {
                   } catch (err) {
                     if (!DocumentPicker.isCancel(err)) throw err
                   }
-                }}>
+                }}
+              >
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -670,13 +693,15 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}>
+                  }}
+                >
                   <Icon name="photos" size={64} color={theme.colors.text} />
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: theme.colors.text,
-                    }}>
+                    }}
+                  >
                     Gallery
                   </Text>
                 </View>
@@ -684,7 +709,8 @@ function Chat(props: Props) {
 
               <TouchableOpacity
                 activeOpacity={0.7}
-                onPress={() => navigation.navigate('GifPicker')}>
+                onPress={() => Linking.openURL('https://giphy.com')}
+              >
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -692,22 +718,54 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}>
+                  }}
+                >
                   <Text
                     style={{
                       fontWeight: 'bold',
                       color: theme.colors.text,
                       fontSize: 32,
                       lineHeight: 64,
-                    }}>
+                    }}
+                  >
                     GIF
                   </Text>
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: theme.colors.text,
-                    }}>
+                    }}
+                  >
                     GIF
+                  </Text>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={async () => {
+                  navigation.navigate('ContactSelection', {
+                    chatID: props.route.params.participants.other.id,
+                  } as ContactSelection.RouteParams)
+                }}
+              >
+                <View
+                  style={{
+                    ...styles.addFileMenuItem,
+                    backgroundColor: lightenDarkenColor(
+                      theme.colors.background,
+                      25 * (theme.dark ? 1 : -1)
+                    ),
+                  }}
+                >
+                  <Icon name="person" size={64} color={theme.colors.text} />
+                  <Text
+                    style={{
+                      ...styles.addFileMenuItemText,
+                      color: theme.colors.text,
+                    }}
+                  >
+                    Contacts
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -750,7 +808,8 @@ function Chat(props: Props) {
                   } catch (err) {
                     if (!DocumentPicker.isCancel(err)) throw err
                   }
-                }}>
+                }}
+              >
                 <View
                   style={{
                     ...styles.addFileMenuItem,
@@ -758,13 +817,15 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}>
+                  }}
+                >
                   <Icon name="document" size={64} color={theme.colors.text} />
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: theme.colors.text,
-                    }}>
+                    }}
+                  >
                     File
                   </Text>
                 </View>
@@ -778,13 +839,15 @@ function Chat(props: Props) {
                       theme.colors.background,
                       25 * (theme.dark ? 1 : -1)
                     ),
-                  }}>
+                  }}
+                >
                   <Icon name="time" size={64} color="grey" />
                   <Text
                     style={{
                       ...styles.addFileMenuItemText,
                       color: 'grey',
-                    }}>
+                    }}
+                  >
                     More to come...
                   </Text>
                 </View>
@@ -815,22 +878,20 @@ const styles = StyleSheet.create({
 const mapStateToProps = (state: any) => ({
   localUser: state.localUserReducer,
   messageUpdatesList: state.messageUpdatesListReducer,
-  pickedGif: state.pickedGifReducer,
+  drafts: state.draftReducer,
 })
 
 const mapDispatchToProps = (dispatch: any) => ({
-  addToMessageUpdateList: (messageId: string | string[]) => {
+  addToMessageUpdateList: (messageId: string | string[]) =>
     dispatch({
       type: 'ADD_TO_MESSAGE_UPDATES_LIST',
       payload: { messageID: messageId },
-    } as messageUpdatesListReducer.Action)
-  },
-  dropPickedGif: () => {
+    } as messageUpdatesListReducer.Action),
+  setDraft: (userID: string, draftText: string) =>
     dispatch({
-      type: 'DROP_PICKED_GIF',
-      payload: {},
-    } as pickedGifReducer.Action)
-  },
+      type: 'SET_DRAFT',
+      payload: { userID: userID, draftText: draftText },
+    } as draftReducer.Action),
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(Chat)

@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react'
-import { Alert, Button, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
+import {
+  Alert,
+  Button,
+  Linking,
+  StyleSheet,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from 'react-native'
 import { ScrollView, TouchableOpacity } from 'react-native-gesture-handler'
 import { connect } from 'react-redux'
 import { lightenDarkenColor } from '../assets/ts/lightenDarkenColor'
@@ -19,6 +28,8 @@ import * as userAvatarsReducer from '../store/reducers/userAvatarsReducer'
 import RNFetchBlob from 'rn-fetch-blob'
 import * as userNamesReducer from '../store/reducers/userNamesReducer'
 import Gallery from './Gallery'
+import { navigate } from '../assets/ts/navigation'
+import { useNavigation } from '@react-navigation/native'
 
 export interface RouteParams {
   user: User
@@ -39,6 +50,7 @@ interface Props {
 
 export function Profile(props: Props) {
   const theme = useTheme()
+  const navigation = useNavigation()
 
   const isSelf = props.route.params.user.id === props.localUser.id
 
@@ -131,15 +143,26 @@ export function Profile(props: Props) {
           <TouchableOpacity
             activeOpacity={0.7}
             onPress={() =>
-              // Add confirmation
-              getRepository(User)
-                .findOneOrFail({
-                  id: props.route.params.user.id,
-                })
-                .then((localUser) => {
-                  props.dropAvatar(localUser.id)
-                  removeImageFromUser(localUser)
-                })
+              Alert.alert(
+                'Remove profile image',
+                'Are you sure you want to clear this image?',
+                [
+                  { text: 'No', style: 'cancel' },
+                  {
+                    text: 'Yes',
+                    style: 'default',
+                    onPress: () =>
+                      getRepository(User)
+                        .findOneOrFail({
+                          id: props.route.params.user.id,
+                        })
+                        .then((localUser) => {
+                          props.dropAvatar(localUser.id)
+                          removeImageFromUser(localUser)
+                        }),
+                  },
+                ]
+              )
             }
           >
             <View
@@ -242,20 +265,14 @@ export function Profile(props: Props) {
               marginTop: 10,
             }}
             onPress={() => {
-              Toast.show({
-                type: 'info',
-                position: 'bottom',
-                text1: 'ChatApp ID copied',
-                visibilityTime: 1500,
-              })
-              Clipboard.setString(props.route.params.user.id)
+              navigation.navigate('QRCode', { userID: props.route.params.user.id })
             }}
           >
             <Text style={{ color: theme.colors.text, fontSize: 19 }}>
               {props.route.params.user.id}
             </Text>
             <Icon
-              name="copy"
+              name="finger-print"
               size={21}
               style={{ marginLeft: 10 }}
               color={theme.colors.text}
@@ -297,24 +314,6 @@ export function Profile(props: Props) {
                 value={theme.dark}
               />
             </View>
-            <View style={styles.rowContainer}>
-              <Text style={{ color: theme.colors.text }}>GF mode</Text>
-              <Switch
-                trackColor={{
-                  false: lightenDarkenColor(
-                    theme.colors.primary,
-                    100 * (theme.dark ? -1 : 1)
-                  ),
-                  true: lightenDarkenColor(
-                    theme.colors.primary,
-                    100 * (theme.dark ? -1 : 1)
-                  ),
-                }}
-                thumbColor={theme.colors.primary}
-                onValueChange={() => console.log('GF')}
-                value={false}
-              />
-            </View>
 
             <View
               style={{
@@ -353,6 +352,32 @@ export function Profile(props: Props) {
                 title="Export private key"
                 color={theme.colors.primary}
               />
+            </View>
+            <View
+              style={{
+                alignItems: 'center',
+                marginTop: 40,
+              }}
+            >
+              <View style={{ flexDirection: 'row', marginVertical: 20 }}>
+                <Text style={{ color: theme.colors.text, marginRight: 5 }}>
+                  Made with ❤️ by
+                </Text>
+                <TouchableOpacity
+                  activeOpacity={0.6}
+                  onPress={() => Linking.openURL('https://tarasa24.dev')}
+                >
+                  <Text style={{ color: theme.colors.text, fontWeight: 'bold' }}>
+                    Tarasa24
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                activeOpacity={0.6}
+                onPress={() => Linking.openURL('https://github.com/Tarasa24/PGPChatApp')}
+              >
+                <Icon name="logo-github" color={theme.colors.text} />
+              </TouchableOpacity>
             </View>
           </View>
         )}

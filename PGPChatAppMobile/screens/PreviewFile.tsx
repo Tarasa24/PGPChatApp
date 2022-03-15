@@ -80,7 +80,8 @@ export default function PreviewFile(props: Props) {
             height: Dimensions.get('window').height - 175,
             justifyContent: 'center',
             alignItems: 'center',
-          }}>
+          }}
+        >
           <Icon name="document" color={theme.colors.text} size={128} />
           <Text style={{ color: theme.colors.text }}>{props.route.params.file.name}</Text>
         </View>
@@ -94,7 +95,8 @@ export default function PreviewFile(props: Props) {
           activeOpacity={0.7}
           onPress={() => {
             FileViewer.open(props.route.params.file.uri)
-          }}>
+          }}
+        >
           {showFile()}
         </TouchableOpacity>
       </View>

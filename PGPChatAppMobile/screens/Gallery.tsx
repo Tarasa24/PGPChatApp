@@ -85,12 +85,14 @@ export default function Gallery(props: Props) {
               borderColor: theme.colors.border,
               borderWidth: 1,
               padding: 5,
-            }}>
+            }}
+          >
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
                 navigation.navigate('PreviewFile', { file: file })
-              }}>
+              }}
+            >
               {file.b64 !== null ? (
                 file.name.includes('.mp4') ? (
                   <Video
@@ -113,12 +115,18 @@ export default function Gallery(props: Props) {
                 )
               ) : (
                 <View
-                  style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}>
+                  style={{ height: 200, justifyContent: 'center', alignItems: 'center' }}
+                >
                   <Icon name="document" size={60} color={theme.colors.primary} />
                   <Text
                     numberOfLines={1}
                     ellipsizeMode="tail"
-                    style={{ marginHorizontal: 10, marginTop: 15 }}>
+                    style={{
+                      marginHorizontal: 10,
+                      marginTop: 15,
+                      color: theme.colors.text,
+                    }}
+                  >
                     {file.name}
                   </Text>
                 </View>
@@ -135,19 +143,22 @@ export default function Gallery(props: Props) {
               width: '50%',
               justifyContent: 'center',
               alignItems: 'center',
-            }}>
+            }}
+          >
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {
                 navigation.navigate('PreviewFile', { file: file })
-              }}>
+              }}
+            >
               <View
                 style={{
                   justifyContent: 'center',
                   alignItems: 'center',
                   minWidth: '100%',
                   minHeight: '100%',
-                }}>
+                }}
+              >
                 <Icon name="document" size={64} color={theme.colors.text} />
                 <Text style={{ color: theme.colors.text }}>{file.name}</Text>
               </View>

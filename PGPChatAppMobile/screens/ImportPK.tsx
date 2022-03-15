@@ -59,7 +59,7 @@ export function ImportPK(props: Props) {
   }, [])
 
   useEffect(() => {
-    setValidID(new RegExp(/^[a-zA-Z0-9]{27}$/).test(ID))
+    setValidID(new RegExp(/^[a-zA-Z0-9]{27,28}$/).test(ID))
   }, [ID])
 
   return (

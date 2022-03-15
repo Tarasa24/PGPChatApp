@@ -4,12 +4,13 @@
 
 // @ts-expect-error
 import { name as appName } from './app.json'
-import { AppRegistry } from 'react-native'
+import { AppRegistry, AppState } from 'react-native'
 import App from './App'
 
 import PushNotification, { Importance } from 'react-native-push-notification'
 import OpenPGP from 'react-native-fast-openpgp'
 import { fetchRest } from './assets/ts/api'
+import { getCurrentRoute } from './assets/ts/navigation'
 import { store } from './store/store'
 import RNCallKeep from 'react-native-callkeep'
 
@@ -63,10 +64,14 @@ PushNotification.configure({
     if (notification.data['PAYLOAD'] !== undefined)
       data.PAYLOAD = JSON.parse(data.PAYLOAD)
 
-    console.log(data.PAYLOAD)
-
     switch (data.COMMAND) {
       case 'NEW_MESSAGE':
+        // Ignore notification if the user is on blacklist
+        if (
+          store.getState().blocklistReducer.includes(data.PAYLOAD.recievedNotificationTo)
+        )
+          return
+
         if (data.PAYLOAD.id !== null) {
           const nonce = await fetchRest(
             '/keyserver/getNonce/' + store.getState().localUserReducer.id
@@ -85,19 +90,57 @@ PushNotification.configure({
           })
         }
 
-        PushNotification.localNotification({
-          channelId: 'new-message',
-          id: 0,
-          title: 'PGP ChatApp',
-          message: data.PAYLOAD.body,
-          smallIcon: '',
-        })
+        let currentRoute
+        try {
+          currentRoute = getCurrentRoute()
+        } catch (error) {
+          currentRoute = null
+        }
 
+        function messageBuilder(newMessages) {
+          const m = Object.values(newMessages).reduce((pre, c) => pre + c.length).length
+          const c = Object.keys(newMessages).length
+          return (
+            (m > 1 ? `${m} new messages` : 'New message') +
+            (c > 1 ? `from ${c} contacts` : '')
+          )
+        }
+
+        if (
+          data.PAYLOAD.id === null &&
+          Object.keys(data.PAYLOAD.newMessages).length === 0
+        )
+          PushNotification.removeAllDeliveredNotifications()
+        else if (
+          AppState.currentState !== 'active' ||
+          (currentRoute !== null && currentRoute.name !== 'Chat')
+        )
+          PushNotification.localNotification({
+            channelId: 'new-message',
+            id: '0',
+            title: 'PGP ChatApp',
+            message: messageBuilder(data.PAYLOAD.newMessages),
+            smallIcon: 'logo_transparent',
+          })
+        else if (currentRoute !== null && currentRoute.name === 'Chat') {
+          delete data.PAYLOAD.newMessages[currentRoute.params.participants.other.id]
+          if (Object.keys(data.PAYLOAD.newMessages).length > 0)
+            PushNotification.localNotification({
+              channelId: 'new-message',
+              id: 0,
+              title: 'PGP ChatApp',
+              message: messageBuilder(data.PAYLOAD.newMessages),
+              smallIcon: 'logo_transparent',
+            })
+        }
         break
       case 'DELETE_ALL_NOTIFICATIONS':
         PushNotification.removeAllDeliveredNotifications()
         break
       case 'INCOMING_CALL':
+        // Ignore notification if the user is on blacklist
+        if (store.getState().blocklistReducer.includes(data.PAYLOAD.caller)) return
+
         const res = await fetchRest('/call/' + data.PAYLOAD.callee)
 
         if (res.info().status === 200) {

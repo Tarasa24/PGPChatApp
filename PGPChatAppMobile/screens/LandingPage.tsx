@@ -100,7 +100,9 @@ export function LandingPage(props) {
 
             const pk = await RNFS.readFile(res.uri, 'utf8')
 
-            const nameMatches = res.name.match(new RegExp(/([a-zA-HJ-NP-Z0-9]{27})\.asc/))
+            const nameMatches = res.name.match(
+              new RegExp(/([a-zA-HJ-NP-Z0-9]{27,28})\.asc/)
+            )
 
             if (
               new RegExp(

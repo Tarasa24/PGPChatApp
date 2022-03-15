@@ -1,10 +1,7 @@
-import DeviceInfo from 'react-native-device-info'
 import RNFetchBlob, { FetchBlobResponse, StatefulPromise } from 'rn-fetch-blob'
 
 const prefixPath = __DEV__
-  ? DeviceInfo.isEmulatorSync()
-    ? 'http://10.0.2.2:5000'
-    : 'http://localhost:5000'
+  ? 'http://localhost:5000'
   : 'https://chatapp.tarasa24.dev/app-api'
 
 export function fetchRest(

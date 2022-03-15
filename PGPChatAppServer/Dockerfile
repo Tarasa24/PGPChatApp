@@ -10,4 +10,6 @@ COPY src .
 
 RUN yarn run build
 
+ENV NODE_ENV=production
+
 CMD [ "yarn",  "run", "start" ]

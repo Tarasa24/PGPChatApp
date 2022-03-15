@@ -5,14 +5,12 @@ import { NavigationContainer } from '@react-navigation/native'
 import { createStackNavigator } from '@react-navigation/stack'
 import { PersistGate } from 'redux-persist/integration/react'
 import { connect, Provider } from 'react-redux'
-import { AppearanceProvider } from 'react-native-appearance'
 import { MenuProvider } from 'react-native-popup-menu'
 import DeviceInfo from 'react-native-device-info'
 
 // Import screens
 import Chats from './screens/Chats'
 import Chat from './screens/Chat'
-import GifPicker from './screens/GifPicker'
 import AddUser from './screens/AddUser'
 import Profile from './screens/Profile'
 import Header from './components/Header'
@@ -22,6 +20,9 @@ import PreviewFile from './screens/PreviewFile'
 import ImportPK from './screens/ImportPK'
 import LandingPage from './screens/LandingPage'
 import GenerateAccount from './screens/GenerateAccount'
+import QRCode from './screens/QRCode'
+import QRCodeScanner from './screens/QRCodeScanner'
+import ContactSelection from './screens/ContactSelection'
 
 // Import custom
 import { ThemeProvider, useTheme } from './components/ThemeContext'
@@ -120,78 +121,86 @@ export default function App() {
       return (
         <Provider store={store}>
           <PersistGate loading={null} persistor={persistor}>
-            <AppearanceProvider>
-              <ThemeProvider>
-                <MenuProvider backHandler={true}>
-                  <ThemedBackground>
-                    <NavigationContainer ref={navigationRef}>
-                      <StackNavigator Stack={Stack}>
-                        <Stack.Screen
-                          name="LandingPage"
-                          component={LandingPage}
-                          options={{ headerShown: false }}
-                        />
-                        <Stack.Screen
-                          name="GenerateAccount"
-                          component={GenerateAccount}
-                          options={{
-                            header: () => <Header title="Generate Account" />,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="ImportPK"
-                          component={ImportPK}
-                          options={{
-                            header: () => <Header title="Import Private Key" />,
-                          }}
-                        />
+            <ThemeProvider>
+              <MenuProvider backHandler={true}>
+                <ThemedBackground>
+                  <NavigationContainer ref={navigationRef}>
+                    <StackNavigator Stack={Stack}>
+                      <Stack.Screen
+                        name="LandingPage"
+                        component={LandingPage}
+                        options={{ headerShown: false }}
+                      />
+                      <Stack.Screen
+                        name="GenerateAccount"
+                        component={GenerateAccount}
+                        options={{
+                          header: () => <Header title="Generate Account" />,
+                        }}
+                      />
+                      <Stack.Screen
+                        name="ImportPK"
+                        component={ImportPK}
+                        options={{
+                          header: () => <Header title="Import Private Key" />,
+                        }}
+                      />
 
-                        <Stack.Screen name="Chats" component={Chats} />
-                        <Stack.Screen
-                          name="AddUser"
-                          component={AddUser}
-                          options={{
-                            header: () => <Header title="Add User" />,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="Profile"
-                          component={Profile}
-                          options={{ header: () => <Header title="Profile" /> }}
-                        />
-                        <Stack.Screen name="Chat" component={Chat} />
-                        <Stack.Screen
-                          name="GifPicker"
-                          component={GifPicker}
-                          options={{
-                            header: () => <Header title="GIF Picker" />,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="Gallery"
-                          component={Gallery}
-                          options={{ header: () => <Header title="Gallery" /> }}
-                        />
-                        <Stack.Screen
-                          name="PreviewFile"
-                          component={PreviewFile}
-                          options={{
-                            header: () => <Header title="File Preview" />,
-                          }}
-                        />
-                        <Stack.Screen
-                          name="Call"
-                          component={Call}
-                          options={{
-                            header: () => <Header title="Call" goBackButton={false} />,
-                          }}
-                        />
-                      </StackNavigator>
-                    </NavigationContainer>
-                  </ThemedBackground>
-                </MenuProvider>
-              </ThemeProvider>
-            </AppearanceProvider>
+                      <Stack.Screen name="Chats" component={Chats} />
+                      <Stack.Screen
+                        name="AddUser"
+                        component={AddUser}
+                        options={{
+                          header: () => <Header title="Add User" />,
+                        }}
+                      />
+                      <Stack.Screen
+                        name="Profile"
+                        component={Profile}
+                        options={{ header: () => <Header title="Profile" /> }}
+                      />
+                      <Stack.Screen
+                        name="QRCode"
+                        component={QRCode}
+                        options={{ header: () => <Header title="QR Code" /> }}
+                      />
+                      <Stack.Screen
+                        name="QRCodeScanner"
+                        component={QRCodeScanner}
+                        options={{ header: () => <Header title="Scanner" /> }}
+                      />
+                      <Stack.Screen name="Chat" component={Chat} />
+                      <Stack.Screen
+                        name="Gallery"
+                        component={Gallery}
+                        options={{ header: () => <Header title="Gallery" /> }}
+                      />
+                      <Stack.Screen
+                        name="PreviewFile"
+                        component={PreviewFile}
+                        options={{
+                          header: () => <Header title="File Preview" />,
+                        }}
+                      />
+                      <Stack.Screen
+                        name="Call"
+                        component={Call}
+                        options={{
+                          header: () => <Header title="Call" goBackButton={false} />,
+                        }}
+                      />
+                      <Stack.Screen
+                        name="ContactSelection"
+                        component={ContactSelection}
+                        options={{
+                          header: () => <Header title="Share contact(s)" />,
+                        }}
+                      />
+                    </StackNavigator>
+                  </NavigationContainer>
+                </ThemedBackground>
+              </MenuProvider>
+            </ThemeProvider>
           </PersistGate>
         </Provider>
       )

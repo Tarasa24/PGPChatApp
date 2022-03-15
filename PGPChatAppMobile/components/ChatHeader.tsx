@@ -26,6 +26,7 @@ import * as Profile from '../screens/Profile'
 import * as socketConnectedReducer from '../store/reducers/socketConnectedReducer'
 import * as userAvatarsReducer from '../store/reducers/userAvatarsReducer'
 import * as userNamesReducer from '../store/reducers/userNamesReducer'
+import * as blocklistReducer from '../store/reducers/blocklistReducer'
 
 interface Props {
   user: User
@@ -35,6 +36,9 @@ interface Props {
   userAvatars: Map<string, string>
   dropAvatar: (userID: string) => void
   dropUsername: (userID: string) => void
+  blocklist: string[]
+  addIDToBlocklist: (userID: string) => void
+  removeIDFromBlocklist: (userID: string) => void
 }
 
 function ChatHeader(props: Props) {
@@ -93,6 +97,9 @@ function ChatHeader(props: Props) {
                 fontSize: 20,
                 marginHorizontal: 10,
                 color: 'white',
+                textDecorationLine: props.blocklist.includes(props.user.id)
+                  ? 'line-through'
+                  : 'none',
               }}
               ellipsizeMode="tail"
               numberOfLines={1}
@@ -124,7 +131,8 @@ function ChatHeader(props: Props) {
             }}
             style={styles.icon}
             disabled={
-              props.socketConnected !== socketConnectedReducer.StateEnum.Connected
+              props.socketConnected !== socketConnectedReducer.StateEnum.Connected ||
+              props.blocklist.includes(props.user.id)
             }
             activeOpacity={0.7}
           >
@@ -132,7 +140,8 @@ function ChatHeader(props: Props) {
               name="call"
               size={25}
               color={
-                props.socketConnected !== socketConnectedReducer.StateEnum.Connected
+                props.socketConnected !== socketConnectedReducer.StateEnum.Connected ||
+                props.blocklist.includes(props.user.id)
                   ? 'grey'
                   : 'white'
               }
@@ -158,12 +167,12 @@ function ChatHeader(props: Props) {
                 }}
               >
                 <Text style={{ ...styles.optionText, color: theme.colors.text }}>
-                  Conversation settings
+                  Show profile
                 </Text>
               </MenuOption>
               <MenuOption onSelect={() => {}}>
-                <Text style={{ ...styles.optionText, color: theme.colors.text }}>
-                  Search
+                <Text style={{ ...styles.optionText, color: 'grey' }}>
+                  Search conversation
                 </Text>
               </MenuOption>
               <MenuOption
@@ -174,19 +183,49 @@ function ChatHeader(props: Props) {
                 }}
               >
                 <Text style={{ ...styles.optionText, color: theme.colors.text }}>
-                  Media
+                  Show media
                 </Text>
               </MenuOption>
-              <MenuOption onSelect={() => {}}>
-                <Text style={{ ...styles.optionText, color: theme.colors.text }}>
-                  Mute notifications
+              <MenuOption
+                onSelect={() => {
+                  if (!props.blocklist.includes(props.user.id))
+                    Alert.alert(
+                      'Are you sure you want to proceed?',
+                      "You are about to block this contact. Future incoming messages from this contact will be silently dropped. Contact won't be notified that you blocked them.",
+                      [
+                        { text: 'No', style: 'default' },
+                        {
+                          text: 'Yes, proceed',
+                          style: 'destructive',
+                          onPress: () => props.addIDToBlocklist(props.user.id),
+                        },
+                      ]
+                    )
+                  else
+                    Alert.alert(
+                      'Are you sure you want to proceed?',
+                      'You are about to unblock this contact.',
+                      [
+                        { text: 'No', style: 'default' },
+                        {
+                          text: 'Yes, proceed',
+                          onPress: () => props.removeIDFromBlocklist(props.user.id),
+                        },
+                      ]
+                    )
+                }}
+              >
+                <Text style={{ ...styles.optionText, color: 'red' }}>
+                  {!props.blocklist.includes(props.user.id)
+                    ? 'Block contact'
+                    : 'Unblock contact'}
                 </Text>
               </MenuOption>
               <MenuOption
                 onSelect={() =>
                   Alert.alert(
                     'Are you sure you want to proceed?',
-                    'You are about to delte this whole conversation including all the messages and the contact itself.',
+                    'You are about to delete this whole conversation including all the messages and the contact itself. Contact will still be able to send messages to you.',
                     [
                       { text: 'No', style: 'default' },
                       {
@@ -276,6 +315,7 @@ const mapStateToProps = (state: any) => ({
   userNames: state.userNamesReducer,
   socketConnected: state.socketConnectedReducer,
   userAvatars: state.userAvatarsReducer,
+  blocklist: state.blocklistReducer,
 })
 
 const mapDispatchToProps = (dispatch: any) => ({
@@ -295,6 +335,16 @@ const mapDispatchToProps = (dispatch: any) => ({
       type: 'DROP_USER_NAME',
       payload: { userID: userID },
     } as userNamesReducer.Action),
+  addIDToBlocklist: (userID: string) =>
+    dispatch({
+      type: 'ADD_ID_TO_BLOCKLIST',
+      payload: { userID: userID },
+    } as blocklistReducer.Action),
+  removeIDFromBlocklist: (userID: string) =>
+    dispatch({
+      type: 'REMOVE_ID_FROM_BLOCKLIST',
+      payload: { userID: userID },
+    } as blocklistReducer.Action),
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(ChatHeader)
