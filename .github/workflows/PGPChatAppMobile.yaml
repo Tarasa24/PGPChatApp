@@ -12,43 +12,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Use Node.js 14.x
-        uses: actions/setup-node@v1
-        with:
-          node-version: '14.x'
-          cache: 'yarn'
-          cache-dependency-path: './PGPChatAppMobile/yarn.lock'
-
       - name: Install dependencies
         working-directory: ./PGPChatAppMobile
         run: yarn install
 
-      - name: Cache Gradle Wrapper
-        uses: actions/cache@v2
-        with:
-          path: ./PGPChatAppMobile/android/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('PGPChatAppMobile/android/gradle/wrapper/gradle-wrapper.properties') }}
-      - name: Cache Gradle Dependencies
-        uses: actions/cache@v2
-        with:
-          path: ./PGPChatAppMobile/android/.gradle/caches
-          key: ${{ runner.os }}-gradle-caches-${{ hashFiles('PGPChatAppMobile/android/gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-caches-
-
       - name: Make Gradlew Executable
         working-directory: ./PGPChatAppMobile/android
         run: chmod +x ./gradlew
-
-      - name: Set up JDK 11
-        uses: actions/setup-java@v2
-        with:
-          java-version: '11'
-          distribution: 'adopt'
-
-      - name: Build Android App Bundle
+      - name: Build Android Release
         working-directory: ./PGPChatAppMobile/android
-        run: ./gradlew assemble --no-daemon
+        run: ./gradlew assembleRelease
 
       - name: get-npm-version
         id: package-version
