@@ -12,10 +12,20 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14.x'
+          cache: 'yarn'
+          cache-dependency-path: ./PGPChatAppMobile/package.json
       - name: Install dependencies
         working-directory: ./PGPChatAppMobile
         run: yarn install
 
+      - uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: '11'
+          cache: gradle
       - name: Make Gradlew Executable
         working-directory: ./PGPChatAppMobile/android
         run: chmod +x ./gradlew
@@ -27,7 +37,7 @@ jobs:
         id: package-version
         uses: martinbeentjes/npm-get-version-action@master
         with:
-          path: ./PGPChatAppMobile/package.json
+          path: ./PGPChatAppMobile
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
