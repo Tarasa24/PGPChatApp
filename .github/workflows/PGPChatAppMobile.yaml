@@ -21,7 +21,7 @@ jobs:
         run: chmod +x ./gradlew
       - name: Build Android Release
         working-directory: ./PGPChatAppMobile/android
-        run: ./gradlew assembleRelease
+        run: ./gradlew :app:assembleRelease
 
       - name: get-npm-version
         id: package-version
