@@ -7,6 +7,7 @@ export const sequelize =
     ? new Sequelize({
         dialect: 'mysql',
         host: process.env.MYSQLHost,
+        port: Number(process.env.MYSQLPort),
         username: process.env.MYSQLUser,
         password: process.env.MYSQLPass,
         database: 'chatapp',

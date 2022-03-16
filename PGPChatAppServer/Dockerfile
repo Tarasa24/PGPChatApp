@@ -13,6 +13,7 @@ RUN yarn run build
 ENV NODE_ENV=production
 ENV TURNsecret=
 ENV MYSQLHost=
+ENV MYSQLPort=
 ENV MYSQLUser=
 ENV MYSQLPass=
 
