@@ -50,7 +50,7 @@ export const KeyServerEntry = sequelize.define('KeyServerEntry', {
     primaryKey: true,
   },
   publicKey: DataTypes.TEXT,
-  nonce: DataTypes.INTEGER,
+  nonce: DataTypes.INTEGER.UNSIGNED,
   notificationToken: DataTypes.STRING,
 })
 
