@@ -34,6 +34,8 @@ target 'PGPChatApp' do
 
   pod 'RNCCheckbox', :path => '../node_modules/@react-native-community/checkbox'
 
+  pod 'react-native-fast-openpgp', :path => '../node_modules/react-native-fast-openpgp'
+
   target 'PGPChatAppTests' do
     inherit! :complete
     # Pods for testing
