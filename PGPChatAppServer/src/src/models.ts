@@ -6,9 +6,9 @@ export const sequelize =
   process.env.NODE_ENV === 'production'
     ? new Sequelize({
         dialect: 'mysql',
-        host: 'mysql.mysql.svc.cluster.local',
-        username: process.env.mysqlUser,
-        password: process.env.mysqlPass,
+        host: process.env.MYSQLHost,
+        username: process.env.MYSQLUser,
+        password: process.env.MYSQLPass,
         database: 'chatapp',
         logging: false,
       })

@@ -5,7 +5,9 @@ import { KeyServerEntry, KeyServerEntryType, MessagesQueue } from './models.js'
 
 admin.initializeApp({
   credential: admin.credential.cert(
-    JSON.parse(await fs.readFile('firebase-secret.json', 'utf-8')) as admin.ServiceAccount
+    JSON.parse(
+      await fs.readFile('config/firebase-secret.json', 'utf-8')
+    ) as admin.ServiceAccount
   ),
 })
 
