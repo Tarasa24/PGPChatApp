@@ -1,4 +1,4 @@
-firebase-secret.json
+**/firebase-secret.json
 *.sqlite
 build/
 node_modules/
