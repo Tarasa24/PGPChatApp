@@ -5,22 +5,52 @@
   import { swipe } from 'svelte-hammer'
   import { theme } from '../store'
 
-  import screenshotLight from '../assets/screenshot-light.jpg'
-  import screenshotDark from '../assets/screenshot-dark.jpg'
+  import screenshotLight1 from '../assets/screenshots/light/1.png'
+  import screenshotLight2 from '../assets/screenshots/light/2.png'
+  import screenshotLight3 from '../assets/screenshots/light/3.png'
+  import screenshotLight4 from '../assets/screenshots/light/4.png'
+  import screenshotLight5 from '../assets/screenshots/light/5.png'
+  import screenshotLight6 from '../assets/screenshots/light/6.png'
+  import screenshotLight7 from '../assets/screenshots/light/7.png'
+  import screenshotLight8 from '../assets/screenshots/light/8.png'
+  import screenshotLight9 from '../assets/screenshots/light/9.png'
+  import screenshotLight10 from '../assets/screenshots/light/10.png'
+  import screenshotLight11 from '../assets/screenshots/light/11.png'
+
+  import screenshotDark1 from '../assets/screenshots/dark/1.png'
+  import screenshotDark2 from '../assets/screenshots/dark/2.png'
+  import screenshotDark3 from '../assets/screenshots/dark/3.png'
+  import screenshotDark4 from '../assets/screenshots/dark/4.png'
+  import screenshotDark5 from '../assets/screenshots/dark/5.png'
+  import screenshotDark6 from '../assets/screenshots/dark/6.png'
+  import screenshotDark7 from '../assets/screenshots/dark/7.png'
+  import screenshotDark8 from '../assets/screenshots/dark/8.png'
+  import screenshotDark9 from '../assets/screenshots/dark/9.png'
+  import screenshotDark10 from '../assets/screenshots/dark/10.png'
+  import screenshotDark11 from '../assets/screenshots/dark/11.png'
 
   import {faArrowLeft, faArrowRight} from '@fortawesome/free-solid-svg-icons'
 
   const animation = gsap.timeline({defaults: {duration: .75, ease: 'power2.inOut'}})
 
   const slides = [
-    "g#one",
-    "g#two"
+    "g#a",
+    "g#b",
+    "g#c",
+    "g#d",
+    "g#e",
+    "g#f",
+    "g#g",
+    "g#h",
+    "g#i",
+    "g#j",
+    "g#k"
   ]
   let currentSlide = 0
 
   export function nextScreenshot() {
-    const slide = slides[Math.abs(currentSlide)%slides.length]
-    const slideNext = slides[Math.abs(currentSlide + 1)%slides.length]
+    const slide = slides[Math.abs(currentSlide) % slides.length]
+    const slideNext = slides[Math.abs(currentSlide + 1) % slides.length]
 
     animation
       // Slides
@@ -83,8 +113,9 @@
   }
 
   export function previousScreenshot() {
-    const slide = slides[Math.abs(currentSlide)%slides.length]
-    const slidePrev = slides[Math.abs(currentSlide - 1)%slides.length]
+    if (currentSlide == 0) return 
+    const slide = slides[Math.abs(currentSlide) % slides.length]
+    const slidePrev = slides[Math.abs(currentSlide - 1) % slides.length]
 
     animation
       // Slides
@@ -157,6 +188,10 @@
     }
 	}
 
+  $: if ($theme) {
+    currentSlide = 0;
+  }
+
 </script>
 
 <svelte:window on:keydown={handleKeydown}/>
@@ -175,13 +210,76 @@
         <rect width="362" height="789" rx="63" fill="#FF0000"/>
       </mask>
       <g mask="url(#mask0)">
-        <g id="two">
-          <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotDark}" />
-        </g>
-        <g id="one">
-          <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotLight}" />
-        </g>
-        
+        {#if $theme === "dark"}
+          <g id="k">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotDark11}" />
+          </g>
+          <g id="j">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotDark10}" />
+          </g>
+          <g id="i">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotDark9}" />
+          </g>
+          <g id="h">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotDark8}" />
+          </g>
+          <g id="g">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotDark7}" />
+          </g>
+          <g id="f">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotDark6}" />
+          </g>
+          <g id="e">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotDark5}" />
+          </g>
+          <g id="d">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotDark4}" />
+          </g>
+          <g id="c">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotDark3}" />
+          </g>
+          <g id="b">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotDark2}" />
+          </g>
+          <g id="a">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotDark1}" />
+          </g>
+        {:else}
+          <g id="k">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotLight11}" />
+          </g>
+          <g id="j">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotLight10}" />
+          </g>
+          <g id="i">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotLight9}" />
+          </g>
+          <g id="h">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotLight8}" />
+          </g>
+          <g id="g">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotLight7}" />
+          </g>
+          <g id="f">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotLight6}" />
+          </g>
+          <g id="e">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotLight5}" />
+          </g>
+          <g id="d">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotLight4}" />
+          </g>
+          <g id="c">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotLight3}" />
+          </g>
+          <g id="b">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotLight2}" />
+          </g>
+          <g id="a">
+            <image x="3.25%" y="1.2%" width="93%" height="96.5%" mask="url(#mask0)" xlink:href="{screenshotLight1}" />
+          </g>
+        {/if}
+
         <path fill-rule="evenodd" clip-rule="evenodd" d="M-0.226929 63.6215C-0.226929 28.5515 28.203 0.121521 63.2731 0.121521H298.92C333.99 0.121521 362.42 28.5514 362.42 63.6215V725.716C362.42 760.786 333.99 789.216 298.92 789.216H63.2731C28.203 789.216 -0.226929 760.786 -0.226929 725.716V63.6215ZM63.2731 13.1215C35.3827 13.1215 12.7731 35.7311 12.7731 63.6215V725.716C12.7731 753.606 35.3827 776.216 63.2731 776.216H298.92C326.81 776.216 349.42 753.606 349.42 725.716V63.6215C349.42 35.7311 326.81 13.1215 298.92 13.1215H63.2731Z" fill={$theme === "dark" ? "#3d3d3d" : "black"}/>
         <circle cx="181.299" cy="27.0926" r="8.41" fill="#282828" stroke="black" stroke-width="2"/>
         <rect x="131.401" y="4.03796" width="99.392" height="5.16707" rx="2.58354" fill="#282828"/>
@@ -190,7 +288,7 @@
     </svg>
   </div>
   <div class="grid grid-flow-col w-full justify-items-center items-center xl:-mt-4 -mt-10">
-    <button on:click|preventDefault={previousScreenshot} class="justify-self-end text-borderDark dark:text-white" >
+    <button on:click|preventDefault={previousScreenshot} disabled={currentSlide == 0} class="justify-self-end {currentSlide == 0 ? 'text-borderLight dark:text-borderDark' : 'text-borderDark dark:text-white'}" >
       <Icon data={faArrowLeft} scale="1.75" />
     </button>
     <div class="mx-5 w-28 h-7 relative" id="bubbles">
