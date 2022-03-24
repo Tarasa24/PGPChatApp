@@ -10,7 +10,7 @@
 <header>
   <div class="bg-primaryLight dark:bg-primaryDark w-100 flex flex-col z-10 pt-[35vh]">
     <h1 class="text-center text-white font-bold lg:text-6xl text-4xl mx-2.5 mb-10">Chat Securely Through The Power Of PGP Encryption</h1>
-    <h2 class="text-center text-borderLight lg:text-3xl text-2xl font-light mx-2.5 mb-5">Meet <b>PGPChatApp</b>, open-source privacy-first feature-rich experience.</h2>
+    <h2 class="text-center text-borderLight lg:text-3xl text-2xl font-light mx-2.5 mb-5">Meet <b>PGPChatApp</b>, open-source privacy-first chatting experience.</h2>
 
     <div class="flex lg:mb-0 mb-6">
       <a href="https://github.com/Tarasa24/PGPChatApp/releases" target="_blank" class="mx-auto mt-20">
